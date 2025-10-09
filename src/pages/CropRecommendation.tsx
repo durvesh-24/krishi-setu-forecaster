@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Leaf, Zap, TrendingUp, Droplets } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import axios from "axios";
 
 const CropRecommendation = () => {
   const navigate = useNavigate();
@@ -15,44 +16,79 @@ const CropRecommendation = () => {
     nitrogen: "",
     phosphorus: "",
     potassium: "",
+    temp: "",
+    humidity: "",
     ph: "",
-    moisture: ""
+    rainfall: ""
   });
+  const [loading, setLoading] = useState(false);
+  const [suitableCrops, setSuitableCrops] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setShowResults(true);
-    toast({
-      title: "Analysis Complete",
-      description: "Crop recommendations generated based on soil parameters",
-    });
+    setLoading(true);
+    setError(null);
+
+    // Prepare payload for FastAPI
+    const payload = {
+      N: parseFloat(formData.nitrogen),
+      P: parseFloat(formData.phosphorus),
+      K: parseFloat(formData.potassium),
+      temperature: parseFloat(formData.temp),
+      humidity: parseFloat(formData.humidity),
+      ph: parseFloat(formData.ph),
+      rainfall: parseFloat(formData.rainfall),
+    };
+
+    try {
+      const res = await axios.post("http://127.0.0.1:8000/predict", payload);
+      // If your backend returns a single crop:
+      setSuitableCrops([
+        {
+          name: res.data.predicted_crop,
+          reason: "This crop is recommended based on your soil and weather parameters."
+        }
+      ]);
+      setShowResults(true);
+      toast({
+        title: "Analysis Complete",
+        description: "Crop recommendations generated based on soil parameters",
+      });
+    } catch (err: any) {
+      setError("Failed to get recommendation. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const suitableCrops = [
-    {
-      name: "Wheat",
-      reason: "Optimal NPK levels and pH range (6.5-7.5) match your soil conditions perfectly. Current moisture levels are ideal for wheat cultivation."
-    },
-    {
-      name: "Cotton",
-      reason: "Good potassium levels support cotton growth. The pH and moisture content are within acceptable range for cotton cultivation."
-    },
-    {
-      name: "Sugarcane",
-      reason: "High nitrogen content and adequate moisture make your soil suitable for sugarcane. pH levels are optimal for this crop."
-    }
-  ];
 
-  const notSuitableCrops = [
-    {
-      name: "Rice",
-      reason: "Requires higher moisture content (80-85%) than current levels. Consider improving water retention before rice cultivation."
-    },
-    {
-      name: "Tea",
-      reason: "Needs acidic soil (pH 4.5-5.5). Your current pH levels are too high for tea plantation."
-    }
-  ];
+
+  // const suitableCrops = [
+  //   {
+  //     name: "Wheat",
+  //     reason: "Optimal NPK levels and pH range (6.5-7.5) match your soil conditions perfectly. Current moisture levels are ideal for wheat cultivation."
+  //   },
+  //   {
+  //     name: "Cotton",
+  //     reason: "Good potassium levels support cotton growth. The pH and moisture content are within acceptable range for cotton cultivation."
+  //   },
+  //   {
+  //     name: "Sugarcane",
+  //     reason: "High nitrogen content and adequate moisture make your soil suitable for sugarcane. pH levels are optimal for this crop."
+  //   }
+  // ];
+
+  // const notSuitableCrops = [
+  //   {
+  //     name: "Rice",
+  //     reason: "Requires higher moisture content (80-85%) than current levels. Consider improving water retention before rice cultivation."
+  //   },
+  //   {
+  //     name: "Tea",
+  //     reason: "Needs acidic soil (pH 4.5-5.5). Your current pH levels are too high for tea plantation."
+  //   }
+  // ];
 
   return (
     <div className="min-h-screen bg-muted pb-4">
@@ -136,6 +172,46 @@ const CropRecommendation = () => {
 
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xl font-bold text-gray-600">T</span>
+                      </div>
+                      <div className="flex-1">
+                        <Label htmlFor="temp">Temperature</Label>
+                        <Input 
+                          id="temp"
+                          placeholder="Enter Temperature (in Celsius)"
+                          value={formData.temp}
+                          onChange={(e) => setFormData({...formData, temp: e.target.value})}
+                          required
+                          type="number"
+                          step="0.1"
+                          min="-100"
+                          max="100"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xl font-bold text-gray-600">H</span>
+                      </div>
+                      <div className="flex-1">
+                        <Label htmlFor="humidity">Humidity</Label>
+                        <Input 
+                          id="humidity"
+                          placeholder="Enter Humidity"
+                          value={formData.humidity}
+                          onChange={(e) => setFormData({...formData, humidity: e.target.value})}
+                          required
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="100"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
                         <span className="text-xl font-bold text-gray-600">pH</span>
                       </div>
                       <div className="flex-1">
@@ -159,24 +235,25 @@ const CropRecommendation = () => {
                         <Droplets className="w-6 h-6 text-blue-600" />
                       </div>
                       <div className="flex-1">
-                        <Label htmlFor="moisture">Moisture (%)</Label>
+                        <Label htmlFor="rainfall">Rainfall (in mm)</Label>
                         <Input 
-                          id="moisture"
-                          placeholder="Enter moisture percentage"
-                          value={formData.moisture}
-                          onChange={(e) => setFormData({...formData, moisture: e.target.value})}
+                          id="rainfall"
+                          placeholder="Enter rainfall (in mm)"
+                          value={formData.rainfall}
+                          onChange={(e) => setFormData({...formData, rainfall: e.target.value})}
                           required
                           type="number"
                           min="0"
-                          max="100"
+                          max="1000"
                         />
                       </div>
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full py-6 text-lg" size="lg">
-                    Get Prediction
+                  <Button type="submit" className="w-full py-6 text-lg" size="lg" disabled={loading}>
+                    {loading ? "Analyzing..." : "Get Prediction"}
                   </Button>
+                  {error && <p className="text-red-600 text-center">{error}</p>}
                 </form>
               </CardContent>
             </Card>
@@ -185,7 +262,7 @@ const CropRecommendation = () => {
           <div className="space-y-4">
             <Card className="border-none shadow-md bg-green-50 border-l-4 border-l-green-500">
               <CardHeader>
-                <CardTitle className="text-green-700">✓ Suitable Crops</CardTitle>
+                <CardTitle className="text-green-700">Most Suitable Crop</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {suitableCrops.map((crop, index) => (
@@ -196,21 +273,6 @@ const CropRecommendation = () => {
                 ))}
               </CardContent>
             </Card>
-
-            <Card className="border-none shadow-md bg-red-50 border-l-4 border-l-red-500">
-              <CardHeader>
-                <CardTitle className="text-red-700">✗ Not Suitable Crops</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {notSuitableCrops.map((crop, index) => (
-                  <div key={index} className="bg-white p-4 rounded-lg">
-                    <h3 className="font-bold text-lg text-red-700 mb-2">{crop.name}</h3>
-                    <p className="text-sm text-gray-700">{crop.reason}</p>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
             <Button 
               onClick={() => setShowResults(false)} 
               variant="outline" 

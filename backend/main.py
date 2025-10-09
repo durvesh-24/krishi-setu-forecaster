@@ -1,3 +1,4 @@
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 from pydantic import BaseModel
 from crop_recommend import predict_crop
@@ -7,6 +8,15 @@ app = FastAPI(
     title="Crop Prediction API 🌾",
     description="Predict suitable crops based on soil and weather conditions.",
     version="1.0.0"
+)
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Define input schema
