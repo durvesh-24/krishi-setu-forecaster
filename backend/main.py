@@ -2,6 +2,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 from pydantic import BaseModel
 from crop_recommend import predict_crop
+from weather import weather_forecast
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -28,6 +29,9 @@ class CropInput(BaseModel):
     humidity: float
     ph: float
     rainfall: float
+    
+class CityInput(BaseModel):
+    city: str
 
 # Root endpoint
 @app.get("/")
@@ -47,3 +51,13 @@ def get_prediction(data: CropInput):
         data.rainfall
     )
     return {"predicted_crop": crop}
+
+# Weather endpoint
+@app.post("/weather")
+def get_prediction(data: CityInput):
+    weather = weather_forecast(
+        data.city
+    )
+    return {"weather_forecast": weather}
+
+
