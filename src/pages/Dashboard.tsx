@@ -2,9 +2,50 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sun, Brain, Cloud, Droplets, Wind, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+
+type WeatherResponse = {
+  weather_forecast: {
+    location: {
+      latitude: number;
+      longitude: number;
+      elevation: number;
+      timezone: string;
+      timezone_abbreviation: string;
+    };
+    current: {
+      time: string;
+      temperature_2m: number;
+      rain: number;
+      wind_speed_10m: number;
+    };
+  };
+};
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const [weather, setWeather] = useState<WeatherResponse["weather_forecast"] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  const city = "mumbai";
+  useEffect(() => {
+    setLoading(true);
+    fetch("http://localhost:8000/weather", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ city }),
+    })
+      .then((res) => res.json())
+      .then((data: WeatherResponse) => {
+        setWeather(data.weather_forecast);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError("Failed to fetch weather data.");
+        setLoading(false);
+      });
+  }, [city]);
 
   return (
     <div className="min-h-screen bg-muted pb-20">
@@ -80,36 +121,42 @@ const Dashboard = () => {
         </div>
 
         {/* Today's Weather */}
-        <Card className="border-none shadow-md">
-          <CardHeader>
-            <CardTitle>Today's Weather</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div className="space-y-2">
-                <div className="w-12 h-12 mx-auto rounded-full bg-orange-100 flex items-center justify-center">
-                  <Sun className="w-6 h-6 text-orange-500" />
+        {loading ? (
+          <div className="text-center text-lg">Loading weather...</div>
+        ) : error ? (
+          <div className="text-center text-red-500">{error}</div>
+        ) : weather ? (
+          <Card className="border-none shadow-md">
+            <CardHeader>
+              <CardTitle>Today's Weather</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4 text-center">
+                <div className="space-y-2">
+                  <div className="w-12 h-12 mx-auto rounded-full bg-orange-100 flex items-center justify-center">
+                    <Sun className="w-6 h-6 text-orange-500" />
+                  </div>
+                  <p className="text-2xl font-bold">{weather.current.temperature_2m.toFixed(2)}°C</p>
+                  <p className="text-sm text-muted-foreground">Temperature</p>
                 </div>
-                <p className="text-2xl font-bold">28°C</p>
-                <p className="text-sm text-muted-foreground">Temperature</p>
-              </div>
-              <div className="space-y-2">
-                <div className="w-12 h-12 mx-auto rounded-full bg-blue-100 flex items-center justify-center">
-                  <Cloud className="w-6 h-6 text-blue-500" />
+                {/* <div className="space-y-2">
+                  <div className="w-12 h-12 mx-auto rounded-full bg-blue-100 flex items-center justify-center">
+                    <Cloud className="w-6 h-6 text-blue-500" />
+                  </div>
+                  <p className="text-2xl font-bold">65%</p>
+                  <p className="text-sm text-muted-foreground">Humidity</p>
+                </div> */}
+                <div className="space-y-2">
+                  <div className="w-12 h-12 mx-auto rounded-full bg-cyan-100 flex items-center justify-center">
+                    <Wind className="w-6 h-6 text-cyan-500" />
+                  </div>
+                  <p className="text-2xl font-bold">{weather.current.wind_speed_10m.toFixed(2)} km/h</p>
+                  <p className="text-sm text-muted-foreground">Wind Speed</p>
                 </div>
-                <p className="text-2xl font-bold">65%</p>
-                <p className="text-sm text-muted-foreground">Humidity</p>
               </div>
-              <div className="space-y-2">
-                <div className="w-12 h-12 mx-auto rounded-full bg-cyan-100 flex items-center justify-center">
-                  <Wind className="w-6 h-6 text-cyan-500" />
-                </div>
-                <p className="text-2xl font-bold">12 km/h</p>
-                <p className="text-sm text-muted-foreground">Wind Speed</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ) : null}
       </div>
 
       {/* Bottom Navigation */}

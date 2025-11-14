@@ -36,7 +36,7 @@ const Weather = () => {
   const [error, setError] = useState<string | null>(null);
 
   // You can make this dynamic (e.g., from user input)
-  const city = "Delhi";
+  const city = "mumbai";
 
   useEffect(() => {
     setLoading(true);
@@ -114,7 +114,7 @@ const Weather = () => {
                 <CardContent className="pt-6">
                   <div className="flex flex-col items-center space-y-2">
                     <Droplets className="w-8 h-8 text-blue-500" />
-                    <p className="text-2xl font-bold">
+                    <p className="text-xl font-bold">
                       {weather.current.rain} mm
                     </p>
                     <p className="text-sm text-muted-foreground">Rain</p>
@@ -126,7 +126,7 @@ const Weather = () => {
                 <CardContent className="pt-6">
                   <div className="flex flex-col items-center space-y-2">
                     <Wind className="w-8 h-8 text-cyan-500" />
-                    <p className="text-2xl font-bold">
+                    <p className="text-xl font-bold">
                       {weather.current.wind_speed_10m.toFixed(2)} km/h
                     </p>
                     <p className="text-sm text-muted-foreground">Wind Speed</p>
