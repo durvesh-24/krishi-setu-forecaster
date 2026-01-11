@@ -1,24 +1,56 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>KrishiSetu - Your Smart Farming Companion</title>
-    <meta name="description" content="Empowering farmers with smart agricultural insights, crop recommendations, weather forecasts, and price predictions" />
-    <meta name="author" content="KrishiSetu" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <meta property="og:title" content="KrishiSetu - Your Smart Farming Companion" />
-    <meta property="og:description" content="Empowering farmers with smart agricultural insights, crop recommendations, weather forecasts, and price predictions" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+  <title>KrishiSetu - Your Smart Farming Companion</title>
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-  </head>
+  <meta name="description" content="Empowering farmers with smart agricultural insights" />
+  <meta name="author" content="KrishiSetu" />
 
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+  <style>
+    .goog-te-banner-frame.skiptranslate {
+      display: none !important;
+    }
+    body {
+      top: 0 !important;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Hidden Google Translate Element -->
+  <div id="google_translate_element" style="display:none;"></div>
+
+  <!-- React Mount -->
+  <div id="root"></div>
+
+  <script>
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement(
+        {
+          pageLanguage: 'en',
+          includedLanguages: 'en,mr',
+          autoDisplay: false
+        },
+        'google_translate_element'
+      );
+    }
+
+    // Expose globally for React
+    window.setAppLanguage = function (lang) {
+      const select = document.querySelector('.goog-te-combo');
+      if (!select) {
+        alert("Language system loading… please try again.");
+        return;
+      }
+      select.value = lang;
+      select.dispatchEvent(new Event('change'));
+    };
+  </script>
+
+  <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
 </html>
