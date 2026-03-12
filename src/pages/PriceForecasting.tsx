@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, TrendingUp, TrendingDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import Footer from "@/components/Footer";
 
 const PriceForecasting = () => {
   const navigate = useNavigate();
@@ -49,7 +50,7 @@ const PriceForecasting = () => {
   const isIncrease = predictedPrice > currentPrice;
 
   return (
-    <div className="min-h-screen bg-muted pb-20">
+    <div className="min-h-screen bg-muted pb-24">
       {/* Header */}
       <div className="bg-primary text-primary-foreground p-4 flex items-center gap-4">
         <Button 
@@ -190,6 +191,7 @@ const PriceForecasting = () => {
           </div>
         )}
       </div>
+      <Footer currentPage="/price-forecasting" />
     </div>
   );
 };

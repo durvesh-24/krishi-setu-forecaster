@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import Footer from "@/components/Footer";
 
 type WeatherResponse = {
   weather_forecast: {
@@ -86,7 +87,7 @@ const Weather = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-700 via-sky-500 to-emerald-400 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-700 via-sky-500 to-emerald-400 text-white pb-24">
       {/* Header */}
       <div className="p-4 flex items-center gap-3">
         <Button
@@ -201,6 +202,7 @@ const Weather = () => {
           </Card>
         </motion.div>
       </div>
+      <Footer currentPage="/weather" />
     </div>
   );
 };
