@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import CropRecommendation from "./pages/CropRecommendation";
+import LeafDiseaseDetection from "./pages/LeafDiseaseDetection";
 import Weather from "./pages/Weather";
 import PriceForecasting from "./pages/PriceForecasting";
 import Profile from "./pages/Profile";
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/crop-recommendation" element={<CropRecommendation />} />
+          <Route path="/leaf-disease-detection" element={<LeafDiseaseDetection />} />
           <Route path="/weather" element={<Weather />} />
           <Route path="/price-forecasting" element={<PriceForecasting />} />
           <Route path="/profile" element={<Profile />} />

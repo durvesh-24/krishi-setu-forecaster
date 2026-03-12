@@ -1,8 +1,9 @@
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI
+from fastapi import FastAPI, File, UploadFile
 from pydantic import BaseModel
 from crop_recommend import predict_crop
 from weather import weather_forecast
+from leaf_disease_detect import predict_disease
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -60,4 +61,32 @@ def get_prediction(data: CityInput):
     )
     return {"weather_forecast": weather}
 
+# Leaf Disease Detection endpoint
+@app.post("/predict-disease")
+async def predict_leaf_disease(file: UploadFile = File(...)):
+    """
+    Predict leaf disease from uploaded image.
+    Accepts image files (PNG, JPG, etc.)
+    """
+    try:
+        # Read the uploaded file
+        contents = await file.read()
+        
+        # Validate file type
+        if not file.content_type.startswith("image/"):
+            return {"error": "Please upload a valid image file"}
+        
+        # Make prediction
+        result = predict_disease(contents)
+        
+        return {
+            "disease": result["disease"],
+            "class": result["class"],
+            "confidence": result["confidence"],
+            "description": result["description"],
+            "treatment": result["treatment"],
+            "probability": result["confidence"]  # For compatibility with frontend
+        }
+    except Exception as e:
+        return {"error": str(e), "detail": "Failed to process image"}
 
