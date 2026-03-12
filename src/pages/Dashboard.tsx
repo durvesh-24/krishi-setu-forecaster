@@ -13,8 +13,8 @@ import {
   User,
   Sprout,
   CloudSun,
-  Home,
-  LineChart,
+  Bug,
+  TrendingUp,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -85,12 +85,16 @@ const Dashboard = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
-          <h1 className="text-3xl font-bold text-gray-900">
-            Good Morning, Farmer 🌾
-          </h1>
-          <p className="text-emerald-700 font-medium mt-1">
-            Today’s farming insights at a glance
-          </p>
+          <Card className="border-none shadow-lg bg-gradient-to-r from-emerald-50 to-lime-50">
+            <CardContent className="pt-6">
+              <h1 className="text-3xl font-bold text-gray-900">
+                Good Morning, Farmer 🌾
+              </h1>
+              <p className="text-emerald-700 font-medium mt-1">
+                Today's farming insights at a glance
+              </p>
+            </CardContent>
+          </Card>
         </motion.div>
 
         {/* Crop Health Card */}
@@ -146,6 +150,34 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           </motion.div>
+
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Card
+              onClick={() => navigate("/leaf-disease-detection")}
+              className="cursor-pointer border-none shadow-md bg-white"
+            >
+              <CardContent className="flex flex-col items-center justify-center p-6 space-y-3">
+                <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
+                  <Bug className="w-8 h-8 text-red-600" />
+                </div>
+                <p className="font-semibold text-center">Leaf Disease Detection</p>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Card
+              onClick={() => navigate("/price-forecasting")}
+              className="cursor-pointer border-none shadow-md bg-white"
+            >
+              <CardContent className="flex flex-col items-center justify-center p-6 space-y-3">
+                <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
+                  <TrendingUp className="w-8 h-8 text-blue-600" />
+                </div>
+                <p className="font-semibold text-center">Price Forecasting</p>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
 
         {/* Today's Weather */}
@@ -188,40 +220,6 @@ const Dashboard = () => {
             </Card>
           </motion.div>
         ) : null}
-      </div>
-
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t">
-        <div className="flex justify-around py-3">
-          <Button
-            variant="ghost"
-            className="flex flex-col"
-            onClick={() => navigate("/dashboard")}
-          >
-            <Home className="w-6 h-6 text-emerald-600" />
-            <span className="text-xs font-medium text-emerald-600">
-              Home
-            </span>
-          </Button>
-
-          <Button
-            variant="ghost"
-            className="flex flex-col"
-            onClick={() => navigate("/price-forecasting")}
-          >
-            <LineChart className="w-6 h-6 text-muted-foreground" />
-            <span className="text-xs">Prices</span>
-          </Button>
-
-          <Button
-            variant="ghost"
-            className="flex flex-col"
-            onClick={() => navigate("/profile")}
-          >
-            <User className="w-6 h-6 text-muted-foreground" />
-            <span className="text-xs">Profile</span>
-          </Button>
-        </div>
       </div>
     </div>
   );

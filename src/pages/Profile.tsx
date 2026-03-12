@@ -10,6 +10,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import Footer from "@/components/Footer";
 
 declare global {
   interface Window {
@@ -30,7 +31,7 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-muted pb-20">
+    <div className="min-h-screen bg-muted pb-24">
       {/* Header */}
       <div className="bg-background p-4 flex items-center gap-4 border-b">
         <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
@@ -148,6 +149,7 @@ const Profile = () => {
           </CardContent>
         </Card>
       </div>
+      <Footer currentPage="/profile" />
     </div>
   );
 };

@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
 import diseaseClasses from "@/data/plant_disease_classes.json";
+import Footer from "@/components/Footer";
 
 interface PredictionResult {
   disease: string;
@@ -131,7 +132,7 @@ const LeafDiseaseDetection = () => {
   };
 
   return (
-    <div className="min-h-screen bg-muted pb-4">
+    <div className="min-h-screen bg-muted pb-24">
       {/* Header */}
       <div className="bg-primary text-primary-foreground p-4 flex items-center gap-4">
         <Button
@@ -348,6 +349,7 @@ const LeafDiseaseDetection = () => {
           </div>
         )}
       </div>
+      <Footer currentPage="/leaf-disease-detection" />
     </div>
   );
 };
