@@ -67,7 +67,11 @@ def predict_disease(image_data: bytes) -> Dict:
         idx = idx.item()
         confidence = probs[0][idx].item()
     pred_cls = CLASS_NAMES[idx]
+    info = DISEASE_INFO.get(pred_cls, {})
     return {
-        "disease": pred_cls,
+        "disease": info.get("name", pred_cls),
+        "class": pred_cls,
         "confidence": confidence,
+        "description": info.get("description", ""),
+        "treatment": info.get("treatment", ""),
     }
