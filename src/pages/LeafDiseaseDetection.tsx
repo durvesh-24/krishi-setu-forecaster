@@ -1,16 +1,23 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Upload, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
+import diseaseClasses from "@/data/plant_disease_classes.json";
 
 interface PredictionResult {
   disease: string;
   confidence: number;
   description: string;
   treatment?: string;
+}
+
+interface DiseaseInfo {
+  disease_name: string;
+  description: string;
+  treatement: string;
 }
 
 const LeafDiseaseDetection = () => {
@@ -90,11 +97,19 @@ const LeafDiseaseDetection = () => {
         }
       );
 
+      // Get disease name from backend
+      const predictedDisease = res.data.disease || res.data.prediction || res.data.class;
+
+      // Map disease info from JSON file
+      const diseaseInfo = (diseaseClasses as DiseaseInfo[]).find(
+        (d) => d.disease_name === predictedDisease
+      );
+
       setPrediction({
-        disease: res.data.disease || res.data.prediction,
+        disease: predictedDisease,
         confidence: res.data.confidence || (res.data.probability * 100),
-        description: res.data.description || "",
-        treatment: res.data.treatment || "",
+        description: diseaseInfo?.description || "",
+        treatment: diseaseInfo?.treatement || "",
       });
 
       setShowResults(true);
