@@ -243,31 +243,25 @@ const LeafDiseaseDetection = () => {
                           <span className="font-semibold">Status: </span>
                           Your leaf appears to be healthy with no signs of disease.
                         </p>
-                        <p className="text-sm text-gray-600 mt-2">
+                        {/* <p className="text-sm text-gray-600 mt-2">
                           <span className="font-semibold">Confidence: </span>
                           {(prediction.confidence * 100).toFixed(2)}%
-                        </p>
+                        </p> */}
                       </div>
                     </CardContent>
                   </Card>
                 ) : (
-                  <Card className="border-none shadow-md bg-orange-50 border-l-4 border-l-orange-500">
-                    <CardHeader>
-                      <CardTitle className="text-orange-700 flex items-center gap-2">
-                        <AlertCircle className="w-6 h-6" />
-                        Disease Detected
-                      </CardTitle>
-                    </CardHeader>
+                  <Card className="border-none shadow-md bg-red-100 border-l-4 border-l-red-500 p-3">
                     <CardContent className="space-y-4">
                       <div className="bg-white p-4 rounded-lg space-y-3">
                         <div>
-                          <p className="font-semibold text-lg text-orange-700">
+                          <p className="font-semibold text-lg text-red-700">
                             {prediction.disease}
                           </p>
-                          <p className="text-sm text-gray-600 mt-1">
+                          {/* <p className="text-sm text-gray-600 mt-1">
                             <span className="font-semibold">Confidence: </span>
                             {(prediction.confidence * 100).toFixed(2)}%
-                          </p>
+                          </p> */}
                         </div>
 
                         {prediction.description && (
