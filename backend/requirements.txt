@@ -4,3 +4,10 @@ pandas==2.2.3
 scikit-learn==1.5.2
 joblib==1.4.2
 numpy==2.1.2
+torch==2.0.1
+torchvision==0.15.2
+Pillow==10.0.0
+requests_cache
+retry_requests
+openmateo_requests
+python-multipart
