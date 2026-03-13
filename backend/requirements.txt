@@ -10,3 +10,5 @@ Pillow==10.0.0
 requests_cache
 retry_requests
 python-multipart
+python-dotenv
+google-genai
