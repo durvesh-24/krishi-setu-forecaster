@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Upload, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
@@ -37,7 +37,7 @@ const getDiseaseDisplayName = (rawName: string) => {
     .replace(/\s*\(\s*/g, " (")
     .replace(/\s*\)\s*/g, ")")
     .trim();
-    
+
   return spaced
     .split(" ")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -55,6 +55,7 @@ const LeafDiseaseDetection = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
+  const [leafSpecies, setLeafSpecies] = useState<{ species: string; confidence: number } | null>(null);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -111,16 +112,43 @@ const LeafDiseaseDetection = () => {
       const formData = new FormData();
       formData.append("file", imageFile);
 
-      const res = await axios.post(
-        `${import.meta.env.VITE_BACKEND}/predict-disease`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const [diseaseResult, leafResult] = await Promise.allSettled([
+        axios.post(
+          `${import.meta.env.VITE_BACKEND}/predict-disease`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        ),
+        axios.post(
+          `${import.meta.env.VITE_BACKEND}/predict-leaf`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        ),
+      ]);
 
+      if (leafResult.status === "fulfilled") {
+        setLeafSpecies({
+          species: leafResult.value.data.species || "",
+          confidence: leafResult.value.data.confidence ?? 0,
+        });
+      } else {
+        console.warn("Leaf species prediction failed", leafResult.reason);
+        setLeafSpecies(null);
+      }
+
+      if (diseaseResult.status !== "fulfilled") {
+        // If disease prediction failed, throw to be caught below and show error
+        throw diseaseResult.reason;
+      }
+
+      const res = diseaseResult.value;
       // Get disease name from backend
       const predictedDisease = res.data.disease || res.data.prediction || res.data.class;
 
@@ -269,6 +297,19 @@ const LeafDiseaseDetection = () => {
             {/* Results Display */}
             {prediction && (
               <>
+                {leafSpecies && (
+                  <Card className="border-none shadow-md bg-blue-50 border-l-4 border-l-blue-500">
+                    <CardHeader>
+                      <CardTitle className="text-blue-700">Leaf Species</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <p className="text-sm text-gray-700">
+                        <span className="font-semibold">Species:</span> {leafSpecies.species}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {prediction.displayName.toLowerCase() === "healthy" ? (
                   <Card className="border-none shadow-md bg-green-50 border-l-4 border-l-green-500">
                     <CardHeader>
@@ -354,6 +395,7 @@ const LeafDiseaseDetection = () => {
                       setSelectedImage(null);
                       setImageFile(null);
                       setPrediction(null);
+                      setLeafSpecies(null);
                       setError(null);
                     }}
                     className="w-full"
