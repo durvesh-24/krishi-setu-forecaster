@@ -10,6 +10,7 @@ import Footer from "@/components/Footer";
 
 interface PredictionResult {
   disease: string;
+  displayName: string;
   confidence: number;
   description: string;
   treatment?: string;
@@ -20,6 +21,28 @@ interface DiseaseInfo {
   description: string;
   treatement: string;
 }
+
+const getDiseaseDisplayName = (rawName: string) => {
+  if (!rawName) return "Unknown";
+
+  const normalized = rawName.trim();
+  const parts = normalized.split("_");
+  const diseaseParts = parts.length > 1 ? parts.slice(1) : parts;
+  const base = diseaseParts.join(" ");
+
+  // Normalize spacing and punctuation
+  const spaced = base
+    .replace(/_/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/\s*\(\s*/g, " (")
+    .replace(/\s*\)\s*/g, ")")
+    .trim();
+    
+  return spaced
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
 
 const LeafDiseaseDetection = () => {
   const navigate = useNavigate();
@@ -108,6 +131,7 @@ const LeafDiseaseDetection = () => {
 
       setPrediction({
         disease: predictedDisease,
+        displayName: getDiseaseDisplayName(predictedDisease),
         confidence: res.data.confidence || (res.data.probability * 100),
         description: diseaseInfo?.description || "",
         treatment: diseaseInfo?.treatement || "",
@@ -245,7 +269,7 @@ const LeafDiseaseDetection = () => {
             {/* Results Display */}
             {prediction && (
               <>
-                {prediction.disease.toLowerCase() === "healthy" ? (
+                {prediction.displayName.toLowerCase() === "healthy" ? (
                   <Card className="border-none shadow-md bg-green-50 border-l-4 border-l-green-500">
                     <CardHeader>
                       <CardTitle className="text-green-700 flex items-center gap-2">
@@ -272,7 +296,7 @@ const LeafDiseaseDetection = () => {
                       <div className="bg-white p-4 rounded-lg space-y-3">
                         <div>
                           <p className="font-semibold text-lg text-red-700">
-                            {prediction.disease}
+                            {prediction.displayName}
                           </p>
                           {/* <p className="text-sm text-gray-600 mt-1">
                             <span className="font-semibold">Confidence: </span>
