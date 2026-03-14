@@ -21,7 +21,7 @@ class SpeciesResponse(BaseModel):
 async def analyze_leaf_species(base64Image: str) -> SpeciesResponse:
     try:
         prompt = """
-        Identify only the plant species from this leaf image.
+        Identify only the layman plant name from this leaf image.
         Do not provide disease information.
         Return result strictly in JSON format:
 
@@ -36,7 +36,7 @@ async def analyze_leaf_species(base64Image: str) -> SpeciesResponse:
         image_bytes = base64.b64decode(image_data)
 
         response = client.models.generate_content(
-            model="gemini-1.5-pro",
+            model="gemini-2.5-flash",
             contents=[
                 prompt,
                 types.Part.from_bytes(

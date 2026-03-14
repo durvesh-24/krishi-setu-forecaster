@@ -14,12 +14,16 @@ interface PredictionResult {
   confidence: number;
   description: string;
   treatment?: string;
+  fertilizerName?: string;
+  waterLevel?: string;
 }
 
 interface DiseaseInfo {
   disease_name: string;
   description: string;
   treatement: string;
+  fertilizerName?: string;
+  waterLevel?: string;
 }
 
 const getDiseaseDisplayName = (rawName: string) => {
@@ -163,6 +167,8 @@ const LeafDiseaseDetection = () => {
         confidence: res.data.confidence || (res.data.probability * 100),
         description: diseaseInfo?.description || "",
         treatment: diseaseInfo?.treatement || "",
+        fertilizerName: diseaseInfo?.fertilizerName || "",
+        waterLevel: diseaseInfo?.waterLevel || "",
       });
 
       setShowResults(true);
@@ -363,6 +369,28 @@ const LeafDiseaseDetection = () => {
                             </p>
                             <p className="text-sm text-gray-600 mt-1">
                               {prediction.treatment}
+                            </p>
+                          </div>
+                        )}
+
+                        {prediction.fertilizerName && (
+                          <div>
+                            <p className="text-sm font-semibold text-gray-700">
+                              Recommended Fertilizer:
+                            </p>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {prediction.fertilizerName}
+                            </p>
+                          </div>
+                        )}
+
+                        {prediction.waterLevel && (
+                          <div>
+                            <p className="text-sm font-semibold text-gray-700">
+                              Watering Instructions:
+                            </p>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {prediction.waterLevel}
                             </p>
                           </div>
                         )}

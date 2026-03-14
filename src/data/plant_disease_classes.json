@@ -2,96 +2,115 @@
     {
         "disease_name": "Cicer arietinum_healthy",
         "description": "The chickpea leaf is healthy with no visible signs of disease or stress.",
-        "treatement": "Maintain regular monitoring and good agricultural practices."
+        "treatement": "Maintain regular monitoring and good agricultural practices.",
+        "waterLevel": "Water requirement: Moderate irrigation (Maintain soil moisture at 60-70% field capacity; avoid waterlogging)"
     },
     {
         "disease_name": "Cicer arietinum_Alternaria_Leaf_Spot",
-        "description": "Alternaria leaf spot causes brown, circular lesions with concentric rings on chickpea leaves. The disease thrives in warm, humid conditions.",
-        "treatement": "Apply fungicides containing mancozeb or chlorothalonil. Remove infected leaves and improve air circulation."
+        "description": "Alternaria leaf spot causes brown, circular lesions with concentric rings on chickpea leaves.",
+        "treatement": "Apply fungicides containing mancozeb or chlorothalonil.",
+        "fertilizerName": "Mancozeb 75% WP"
     },
     {
         "disease_name": "Cicer arietinum_Dry_leaves",
-        "description": "Leaves are drying out, which can be caused by water stress, nutrient deficiency, or late-stage disease.",
-        "treatement": "Ensure adequate irrigation, check soil moisture, apply balanced fertilizers, and investigate underlying causes."
+        "description": "Leaves are drying due to water stress or nutrient deficiency.",
+        "treatement": "Ensure adequate irrigation and apply balanced fertilizers.",
+        "fertilizerName": "NPK 20:20:20 Water Soluble Fertilizer"
     },
     {
         "disease_name": "Hibiscus_healthy",
-        "description": "The hibiscus leaf is healthy with vibrant color and no visible signs of disease.",
-        "treatement": "Continue regular care with proper watering and nutrient management."
+        "description": "The hibiscus leaf is healthy with vibrant color.",
+        "treatement": "Continue regular care and nutrient management.",
+        "waterLevel": "Water requirement: Regular watering (Keep soil consistently moist but not soggy; water 2-3 times per week)"
     },
     {
         "disease_name": "Hibiscus_powdery_mildew",
-        "description": "Powdery mildew appears as a white, powdery coating on hibiscus leaves and stems. It thrives in warm, dry conditions.",
-        "treatement": "Apply sulfur-based fungicides or neem oil. Improve air circulation and reduce humidity around the plant."
+        "description": "White powdery fungal growth on leaves.",
+        "treatement": "Apply sulfur-based fungicides.",
+        "fertilizerName": "Wettable Sulphur 80% WDG"
     },
     {
         "disease_name": "Hibiscus_Insect_damage",
-        "description": "The leaf shows signs of insect feeding damage, with irregular holes or discoloration caused by pests.",
-        "treatement": "Inspect for common hibiscus pests like spider mites or scale insects. Use appropriate insecticides or horticultural oils."
+        "description": "Leaf damage due to insect feeding.",
+        "treatement": "Use neem oil or systemic insecticide.",
+        "fertilizerName": "Neem Oil 1500 PPM"
     },
     {
         "disease_name": "Hibiscus_Dried_leaf",
-        "description": "Leaves are drying and withering, possibly due to insufficient watering, low humidity, or temperature stress.",
-        "treatement": "Increase watering frequency, mist the plant, maintain warm temperatures, and check for root problems."
+        "description": "Leaves drying due to stress or improper watering.",
+        "treatement": "Improve watering and apply balanced nutrients.",
+        "fertilizerName": "NPK 19:19:19 Fertilizer"
     },
     {
         "disease_name": "Hibiscus_yellow_chlorosis",
-        "description": "Yellowing of leaves due to chlorophyll loss, typically caused by nutrient deficiency (iron, magnesium, or nitrogen).",
-        "treatement": "Apply balanced fertilizer or specific micronutrient supplements. Improve soil drainage and pH if needed."
+        "description": "Yellowing due to micronutrient deficiency.",
+        "treatement": "Apply iron or micronutrient supplements.",
+        "fertilizerName": "Ferrous EDTA (Iron Chelate)"
     },
     {
         "disease_name": "mango_healthy",
-        "description": "The mango leaf is healthy with normal coloration and no signs of disease or pest damage.",
-        "treatement": "Maintain regular care schedule with appropriate watering and fertilization."
+        "description": "The mango leaf is healthy.",
+        "treatement": "Maintain proper fertilization schedule.",
+        "waterLevel ": "Water requirement: Light but deep irrigation (Water every 7-10 days; avoid excess moisture)"
     },
     {
         "disease_name": "mango_Powderly_Mildew",
-        "description": "Powdery mildew on mango appears as white coating on leaves and flowers, reducing fruit quality.",
-        "treatement": "Apply sulfur fungicides or wettable sulfur. Ensure good air circulation and avoid overhead watering."
+        "description": "White fungal growth on leaves and flowers.",
+        "treatement": "Apply sulfur fungicides.",
+        "fertilizerName": "Wettable Sulphur 80% WDG"
     },
     {
         "disease_name": "mango_Mango_rust",
-        "description": "Mango rust causes reddish-brown pustules on the underside of leaves, leading to premature leaf drop.",
-        "treatement": "Apply copper-based fungicides. Remove and destroy infected leaves. Improve tree ventilation."
+        "description": "Reddish-brown pustules on leaves.",
+        "treatement": "Apply copper-based fungicides.",
+        "fertilizerName": "Copper Oxychloride 50% WP"
     },
     {
         "disease_name": "mango_Bacterial_Leaf_Spot",
-        "description": "Bacterial leaf spot appears as small, dark, water-soaked lesions that may have a yellow halo on mango leaves.",
-        "treatement": "Prune infected branches, apply copper fungicides, and improve drainage to reduce leaf wetness."
+        "description": "Dark water-soaked lesions on leaves.",
+        "treatement": "Apply copper fungicides.",
+        "fertilizerName": "Copper Hydroxide 77% WP"
     },
     {
         "disease_name": "mango_Dried_leaves",
-        "description": "Mango leaves are drying due to water stress, root issues, or late-stage disease infection.",
-        "treatement": "Check irrigation schedule, inspect roots for rot, and apply appropriate fungicides if disease is present."
+        "description": "Leaves drying due to stress or disease.",
+        "treatement": "Improve irrigation and nutrient supply.",
+        "fertilizerName": "NPK 20:20:20 Water Soluble Fertilizer"
     },
     {
         "disease_name": "mango_Nutrient_Deficiency",
-        "description": "Yellowing or pale leaves indicating deficiency of essential nutrients like nitrogen, iron, or magnesium.",
-        "treatement": "Apply balanced fertilizer or specific micronutrient formulations. Conduct soil analysis to identify deficient nutrients."
+        "description": "Pale or yellow leaves due to nutrient deficiency.",
+        "treatement": "Apply balanced fertilizer or micronutrient mixture.",
+        "fertilizerName": "Micronutrient Mixture (Zn, Fe, Mn, Mg)"
     },
     {
         "disease_name": "Jowar_healthy",
-        "description": "The sorghum (Jowar) leaf is healthy with no visible signs of disease, pest damage, or nutrient deficiency.",
-        "treatement": "Continue with regular maintenance and monitoring practices."
+        "description": "The sorghum leaf is healthy.",
+        "treatement": "Maintain soil fertility.",
+        "waterLevel": "Water requirement: Moderate irrigation (Water at critical stages – germination, flowering, grain filling)"
     },
     {
         "disease_name": "Jowar_Anthracnose(Leaf Blight)",
-        "description": "Anthracnose causes dark, elongated lesions with red borders on jowar leaves, leading to premature leaf death.",
-        "treatement": "Use disease-resistant varieties, apply fungicides with active ingredient azoxystrobin, and practice crop rotation."
+        "description": "Dark lesions with red borders on leaves.",
+        "treatement": "Apply azoxystrobin fungicide.",
+        "fertilizerName": "Azoxystrobin 23% SC"
     },
     {
         "disease_name": "Jowar_Jowar_rust",
-        "description": "Jowar rust appears as reddish-brown pustules on leaf surfaces, reducing photosynthetic capacity.",
-        "treatement": "Apply sulfur or rust-specific fungicides early. Remove infected plant material and improve field sanitation."
+        "description": "Reddish-brown rust pustules.",
+        "treatement": "Apply sulfur-based fungicide.",
+        "fertilizerName": "Wettable Sulphur 80% WDG"
     },
     {
         "disease_name": "Jowar_black_mold",
-        "description": "Black mold (sooty mold) appears as black coating on jowar leaves and grains, often following insect infestations.",
-        "treatement": "Control insect vectors with appropriate insecticides. Remove heavily infected plant parts."
+        "description": "Black fungal growth due to insect infestation.",
+        "treatement": "Control insects and clean field.",
+        "fertilizerName": "Imidacloprid 17.8% SL"
     },
     {
         "disease_name": "Jowar_Dry_leaves",
-        "description": "Jowar leaves are drying prematurely due to water stress, disease, or environmental conditions.",
-        "treatement": "Ensure adequate irrigation, apply appropriate fungicides if disease is present, and check for pest damage."
+        "description": "Leaves drying due to stress.",
+        "treatement": "Ensure irrigation and balanced fertilization.",
+        "fertilizerName": "NPK 20:20:20 Water Soluble Fertilizer"
     }
 ]
