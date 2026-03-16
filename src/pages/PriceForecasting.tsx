@@ -174,8 +174,8 @@ const PriceForecasting = () => {
                       <SelectItem value="wheat">Wheat</SelectItem>
                       <SelectItem value="rice">Rice</SelectItem>
                       <SelectItem value="jowar">Jowar</SelectItem>
-                      <SelectItem value="bajra">Sugarcane</SelectItem>
-                      <SelectItem value="bajra">Cotton</SelectItem>
+                      <SelectItem value="sugarcane">Sugarcane</SelectItem>
+                      <SelectItem value="cotton">Cotton</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

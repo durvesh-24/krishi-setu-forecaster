@@ -38,7 +38,7 @@ const Footer = ({ currentPage }: FooterProps) => {
             <Button
               key={page.path}
               variant="ghost"
-              className="flex flex-col min-w-max"
+              className="flex flex-col min-w-max m-2 hover:bg-emerald-200 rounded-lg"
               onClick={() => navigate(page.path)}
             >
               <IconComponent className="w-6 h-6 text-emerald-600" />
