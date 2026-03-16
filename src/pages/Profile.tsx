@@ -22,7 +22,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const [showLang, setShowLang] = useState(false);
 
-  const changeLanguage = (lang: "en" | "mr") => {
+  const changeLanguage = (lang: "en" | "mr" | "hi") => {
     if (lang === "en") {
       window.setAppLanguage("en");
     }
@@ -34,7 +34,11 @@ const Profile = () => {
     <div className="min-h-screen bg-muted pb-24">
       {/* Header */}
       <div className="bg-background p-4 flex items-center gap-4 border-b">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate("/dashboard")}
+        >
           <ArrowLeft className="w-6 h-6" />
         </Button>
         <h1 className="text-xl font-bold">Profile</h1>
@@ -42,7 +46,10 @@ const Profile = () => {
 
       <div className="p-4 space-y-6">
         {/* Profile Card */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
           <Card className="border-none shadow-md">
             <CardContent className="pt-6 text-center space-y-3">
               <div className="mx-auto w-24 h-24 rounded-full bg-primary flex items-center justify-center">
@@ -65,7 +72,7 @@ const Profile = () => {
           {[
             { label: "Crops", value: "3" },
             { label: "Acres", value: "8" },
-            { label: "Years", value: "12" }
+            { label: "Years", value: "12" },
           ].map((item, i) => (
             <motion.div
               key={i}
@@ -96,12 +103,17 @@ const Profile = () => {
                 </div>
                 <div className="text-left">
                   <p className="font-semibold">Language</p>
-                  <p className="text-sm text-muted-foreground notranslate" translate="no">
-                    English / मराठी
+                  <p
+                    className="text-sm text-muted-foreground notranslate"
+                    translate="no"
+                  >
+                    English / मराठी / हिन्दी
                   </p>
                 </div>
               </div>
-              <ChevronRight className={`w-5 h-5 transition ${showLang ? "rotate-90" : ""}`} />
+              <ChevronRight
+                className={`w-5 h-5 transition ${showLang ? "rotate-90" : ""}`}
+              />
             </button>
 
             {showLang && (
@@ -123,6 +135,13 @@ const Profile = () => {
                   onClick={() => changeLanguage("mr")}
                 >
                   मराठी
+                </button>
+                <button
+                  className="w-full text-left px-6 py-3 hover:bg-muted notranslate"
+                  translate="no"
+                  onClick={() => changeLanguage("hi")}
+                >
+                  हिन्दी
                 </button>
               </motion.div>
             )}
