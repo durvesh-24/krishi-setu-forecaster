@@ -1,7 +1,13 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Upload, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Upload,
+  AlertCircle,
+  CheckCircle,
+  Loader2,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
@@ -59,7 +65,10 @@ const LeafDiseaseDetection = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
-  const [leafSpecies, setLeafSpecies] = useState<{ species: string; confidence: number } | null>(null);
+  const [leafSpecies, setLeafSpecies] = useState<{
+    species: string;
+    confidence: number;
+  } | null>(null);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -124,17 +133,13 @@ const LeafDiseaseDetection = () => {
             headers: {
               "Content-Type": "multipart/form-data",
             },
-          }
+          },
         ),
-        axios.post(
-          `${import.meta.env.VITE_BACKEND}/predict-leaf`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        ),
+        axios.post(`${import.meta.env.VITE_BACKEND}/predict-leaf`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }),
       ]);
 
       if (leafResult.status === "fulfilled") {
@@ -154,17 +159,18 @@ const LeafDiseaseDetection = () => {
 
       const res = diseaseResult.value;
       // Get disease name from backend
-      const predictedDisease = res.data.disease || res.data.prediction || res.data.class;
+      const predictedDisease =
+        res.data.disease || res.data.prediction || res.data.class;
 
       // Map disease info from JSON file
       const diseaseInfo = (diseaseClasses as DiseaseInfo[]).find(
-        (d) => d.disease_name === predictedDisease
+        (d) => d.disease_name === predictedDisease,
       );
 
       setPrediction({
         disease: predictedDisease,
         displayName: getDiseaseDisplayName(predictedDisease),
-        confidence: res.data.confidence || (res.data.probability * 100),
+        confidence: res.data.confidence || res.data.probability * 100,
         description: diseaseInfo?.description || "",
         treatment: diseaseInfo?.treatement || "",
         fertilizerName: diseaseInfo?.fertilizerName || "",
@@ -177,7 +183,9 @@ const LeafDiseaseDetection = () => {
         description: "Leaf disease prediction completed successfully",
       });
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || "Failed to analyze image. Please try again.";
+      const errorMessage =
+        err.response?.data?.detail ||
+        "Failed to analyze image. Please try again.";
       setError(errorMessage);
       toast({
         title: "Analysis Failed",
@@ -215,61 +223,59 @@ const LeafDiseaseDetection = () => {
               <CardHeader>
                 <CardTitle>Upload Leaf Image</CardTitle>
               </CardHeader>
-              <CardContent><form onSubmit={handleSubmit} className="space-y-6 h-full">
-  <div className="flex w-full h-full gap-6">
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-6 h-full">
+                  <div className="flex w-full h-full gap-6">
+                    {/* Image Upload Area */}
+                    <div
+                      onClick={handleUploadClick}
+                      className="w-full h-full border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all flex items-center justify-center"
+                    >
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                        className="hidden"
+                      />
 
-    {/* Image Upload Area */}
-    <div
-      onClick={handleUploadClick}
-      className="w-full h-full border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all flex items-center justify-center"
-    >
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleImageSelect}
-        className="hidden"
-      />
+                      <div className="space-y-2 h-80 flex flex-col items-center justify-center">
+                        <div className="flex justify-center">
+                          <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
+                            <Upload className="w-8 h-8 text-blue-600" />
+                          </div>
+                        </div>
+                        <p className="font-semibold text-gray-700">
+                          Click to upload or drag and drop
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          PNG, JPG, GIF up to 10MB
+                        </p>
+                      </div>
+                    </div>
 
-      <div className="space-y-2 h-80 flex flex-col items-center justify-center">
-        <div className="flex justify-center">
-          <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-            <Upload className="w-8 h-8 text-blue-600" />
-          </div>
-        </div>
-        <p className="font-semibold text-gray-700">
-          Click to upload or drag and drop
-        </p>
-        <p className="text-sm text-gray-500">
-          PNG, JPG, GIF up to 10MB
-        </p>
-      </div>
-    </div>
+                    {/* Image Preview */}
+                    {selectedImage && (
+                      <div className="w-full flex flex-col space-y-3">
+                        <div className="flex-1 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
+                          <img
+                            src={selectedImage}
+                            alt="Preview"
+                            className="aspect-auto max-w-full max-h-80 object-contain"
+                          />
+                        </div>
 
-    {/* Image Preview */}
-    {selectedImage && (
-      <div className="w-full flex flex-col space-y-3">
-
-        <div className="flex-1 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
-          <img
-            src={selectedImage}
-            alt="Preview"
-            className="aspect-auto max-w-full max-h-80 object-contain"
-          />
-        </div>
-
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          onClick={handleUploadClick}
-        >
-          Change Image
-        </Button>
-      </div>
-    )}
-
-  </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full"
+                          onClick={handleUploadClick}
+                        >
+                          Change Image
+                        </Button>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Submit Button */}
                   <Button
@@ -306,11 +312,14 @@ const LeafDiseaseDetection = () => {
                 {leafSpecies && (
                   <Card className="border-none shadow-md bg-blue-50 border-l-4 border-l-blue-500">
                     <CardHeader>
-                      <CardTitle className="text-blue-700">Leaf Species</CardTitle>
+                      <CardTitle className="text-blue-700">
+                        Leaf Species
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2">
                       <p className="text-sm text-gray-700">
-                        <span className="font-semibold">Species:</span> {leafSpecies.species}
+                        <span className="font-semibold">Species:</span>{" "}
+                        {leafSpecies.species}
                       </p>
                     </CardContent>
                   </Card>
@@ -328,12 +337,18 @@ const LeafDiseaseDetection = () => {
                       <div className="bg-white p-4 rounded-lg">
                         <p className="text-sm text-gray-700">
                           <span className="font-semibold">Status: </span>
-                          Your leaf appears to be healthy with no signs of disease.
+                          Your leaf appears to be healthy with no signs of
+                          disease.
                         </p>
-                        {/* <p className="text-sm text-gray-600 mt-2">
-                          <span className="font-semibold">Confidence: </span>
-                          {(prediction.confidence * 100).toFixed(2)}%
-                        </p> */}
+
+                        {prediction.waterLevel && (
+                          <p className="text-sm text-gray-600 mt-1">
+                            <span className="font-semibold">
+                              Watering Instructions: &nbsp;
+                            </span>
+                            {prediction.waterLevel}
+                          </p>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -345,10 +360,6 @@ const LeafDiseaseDetection = () => {
                           <p className="font-semibold text-lg text-red-700">
                             {prediction.displayName}
                           </p>
-                          {/* <p className="text-sm text-gray-600 mt-1">
-                            <span className="font-semibold">Confidence: </span>
-                            {(prediction.confidence * 100).toFixed(2)}%
-                          </p> */}
                         </div>
 
                         {prediction.description && (
@@ -383,17 +394,6 @@ const LeafDiseaseDetection = () => {
                             </p>
                           </div>
                         )}
-
-                        {prediction.waterLevel && (
-                          <div>
-                            <p className="text-sm font-semibold text-gray-700">
-                              Watering Instructions:
-                            </p>
-                            <p className="text-sm text-gray-600 mt-1">
-                              {prediction.waterLevel}
-                            </p>
-                          </div>
-                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -405,7 +405,10 @@ const LeafDiseaseDetection = () => {
                     <CardTitle>Analyzed Image</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center" style={{ maxHeight: "300px" }}>
+                    <div
+                      className="bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center"
+                      style={{ maxHeight: "300px" }}
+                    >
                       <img
                         src={selectedImage || ""}
                         alt="Analyzed"
