@@ -1,0 +1,134 @@
+{
+    "apple": {
+        "N_range_kg_per_ha": "500-700",
+        "P_range_kg_per_ha": "250-350",
+        "K_range_kg_per_ha": "400-600",
+        "preferred_fertilizer": "NPK 12:32:16 + Organic Manure"
+    },
+    "banana": {
+        "N_range_kg_per_ha": "200-300",
+        "P_range_kg_per_ha": "60-100",
+        "K_range_kg_per_ha": "200-350",
+        "preferred_fertilizer": "NPK 10:10:20"
+    },
+    "blackgram": {
+        "N_range_kg_per_ha": "15-25",
+        "P_range_kg_per_ha": "40-60",
+        "K_range_kg_per_ha": "20-40",
+        "preferred_fertilizer": "DAP (18:46:0)"
+    },
+    "chickpea": {
+        "N_range_kg_per_ha": "20-30",
+        "P_range_kg_per_ha": "40-60",
+        "K_range_kg_per_ha": "20-40",
+        "preferred_fertilizer": "DAP (18:46:0)"
+    },
+    "coconut": {
+        "N_range_kg_per_ha": "300-500",
+        "P_range_kg_per_ha": "40-100",
+        "K_range_kg_per_ha": "400-800",
+        "preferred_fertilizer": "NPK 14:14:14 + MOP"
+    },
+    "coffee": {
+        "N_range_kg_per_ha": "120-200",
+        "P_range_kg_per_ha": "90-120",
+        "K_range_kg_per_ha": "120-200",
+        "preferred_fertilizer": "NPK 20:20:20"
+    },
+    "cotton": {
+        "N_range_kg_per_ha": "100-200",
+        "P_range_kg_per_ha": "50-100",
+        "K_range_kg_per_ha": "50-100",
+        "preferred_fertilizer": "NPK 19:19:19"
+    },
+    "grapes": {
+        "N_range_kg_per_ha": "400-600",
+        "P_range_kg_per_ha": "200-300",
+        "K_range_kg_per_ha": "400-600",
+        "preferred_fertilizer": "NPK 12:12:17"
+    },
+    "jute": {
+        "N_range_kg_per_ha": "40-80",
+        "P_range_kg_per_ha": "20-40",
+        "K_range_kg_per_ha": "20-40",
+        "preferred_fertilizer": "NPK 20:10:10"
+    },
+    "kidneybeans": {
+        "N_range_kg_per_ha": "20-30",
+        "P_range_kg_per_ha": "40-60",
+        "K_range_kg_per_ha": "20-40",
+        "preferred_fertilizer": "DAP (18:46:0)"
+    },
+    "lentil": {
+        "N_range_kg_per_ha": "15-25",
+        "P_range_kg_per_ha": "30-50",
+        "K_range_kg_per_ha": "20-40",
+        "preferred_fertilizer": "DAP (18:46:0)"
+    },
+    "maize": {
+        "N_range_kg_per_ha": "120-250",
+        "P_range_kg_per_ha": "60-100",
+        "K_range_kg_per_ha": "40-80",
+        "preferred_fertilizer": "NPK 20:20:0 + Urea"
+    },
+    "mango": {
+        "N_range_kg_per_ha": "200-400",
+        "P_range_kg_per_ha": "100-200",
+        "K_range_kg_per_ha": "200-400",
+        "preferred_fertilizer": "NPK 12:32:16"
+    },
+    "mothbeans": {
+        "N_range_kg_per_ha": "15-25",
+        "P_range_kg_per_ha": "30-50",
+        "K_range_kg_per_ha": "20-40",
+        "preferred_fertilizer": "DAP (18:46:0)"
+    },
+    "mungbean": {
+        "N_range_kg_per_ha": "15-25",
+        "P_range_kg_per_ha": "30-50",
+        "K_range_kg_per_ha": "20-40",
+        "preferred_fertilizer": "DAP (18:46:0)"
+    },
+    "muskmelon": {
+        "N_range_kg_per_ha": "80-120",
+        "P_range_kg_per_ha": "40-60",
+        "K_range_kg_per_ha": "80-120",
+        "preferred_fertilizer": "NPK 19:19:19"
+    },
+    "orange": {
+        "N_range_kg_per_ha": "200-400",
+        "P_range_kg_per_ha": "100-200",
+        "K_range_kg_per_ha": "200-400",
+        "preferred_fertilizer": "NPK 12:12:17"
+    },
+    "papaya": {
+        "N_range_kg_per_ha": "150-250",
+        "P_range_kg_per_ha": "60-100",
+        "K_range_kg_per_ha": "150-300",
+        "preferred_fertilizer": "NPK 19:19:19"
+    },
+    "pigeonpeas": {
+        "N_range_kg_per_ha": "20-30",
+        "P_range_kg_per_ha": "40-60",
+        "K_range_kg_per_ha": "20-40",
+        "preferred_fertilizer": "DAP (18:46:0)"
+    },
+    "pomegranate": {
+        "N_range_kg_per_ha": "250-400",
+        "P_range_kg_per_ha": "125-200",
+        "K_range_kg_per_ha": "250-400",
+        "preferred_fertilizer": "NPK 13:0:45 (Potassium Nitrate)"
+    },
+    "rice": {
+        "N_range_kg_per_ha": "100-150",
+        "P_range_kg_per_ha": "40-60",
+        "K_range_kg_per_ha": "40-60",
+        "preferred_fertilizer": "Urea + DAP + MOP"
+    },
+    "watermelon": {
+        "N_range_kg_per_ha": "80-120",
+        "P_range_kg_per_ha": "40-60",
+        "K_range_kg_per_ha": "80-120",
+        "preferred_fertilizer": "NPK 19:19:19"
+    }
+}

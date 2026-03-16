@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
 import Footer from "@/components/Footer";
+import cropData from "@/data/commodity_npk_fertilizer_data.json";
 
 const CropRecommendation = () => {
   const navigate = useNavigate();
@@ -44,13 +45,27 @@ const CropRecommendation = () => {
 
     try {
       const res = await axios.post(`${import.meta.env.VITE_BACKEND}/predict`, payload);
-      // If your backend returns a single crop:
-      setSuitableCrops([
-        {
+      const cropName = res.data.predicted_crop.toLowerCase();
+      const cropInfo = cropData[cropName];
+      
+      if (cropInfo) {
+        setSuitableCrops([{
           name: res.data.predicted_crop,
-          reason: "This crop is recommended based on your soil and weather parameters."
-        }
-      ]);
+          nRange: cropInfo.N_range_kg_per_ha,
+          pRange: cropInfo.P_range_kg_per_ha,
+          kRange: cropInfo.K_range_kg_per_ha,
+          fertilizer: cropInfo.preferred_fertilizer
+        }]);
+      } else {
+        setSuitableCrops([{
+          name: res.data.predicted_crop,
+          nRange: "N/A",
+          pRange: "N/A",
+          kRange: "N/A",
+          fertilizer: "N/A"
+        }]);
+      }
+      
       setShowResults(true);
       toast({
         title: "Analysis Complete",
@@ -63,33 +78,6 @@ const CropRecommendation = () => {
     }
   };
 
-
-
-  // const suitableCrops = [
-  //   {
-  //     name: "Wheat",
-  //     reason: "Optimal NPK levels and pH range (6.5-7.5) match your soil conditions perfectly. Current moisture levels are ideal for wheat cultivation."
-  //   },
-  //   {
-  //     name: "Cotton",
-  //     reason: "Good potassium levels support cotton growth. The pH and moisture content are within acceptable range for cotton cultivation."
-  //   },
-  //   {
-  //     name: "Sugarcane",
-  //     reason: "High nitrogen content and adequate moisture make your soil suitable for sugarcane. pH levels are optimal for this crop."
-  //   }
-  // ];
-
-  // const notSuitableCrops = [
-  //   {
-  //     name: "Rice",
-  //     reason: "Requires higher moisture content (80-85%) than current levels. Consider improving water retention before rice cultivation."
-  //   },
-  //   {
-  //     name: "Tea",
-  //     reason: "Needs acidic soil (pH 4.5-5.5). Your current pH levels are too high for tea plantation."
-  //   }
-  // ];
 
   return (
     <div className="min-h-screen bg-muted pb-24">
@@ -268,8 +256,13 @@ const CropRecommendation = () => {
               <CardContent className="space-y-4">
                 {suitableCrops.map((crop, index) => (
                   <div key={index} className="bg-white p-4 rounded-lg">
-                    <h3 className="font-bold text-lg text-green-700 mb-2">{crop.name}</h3>
-                    <p className="text-sm text-gray-700">{crop.reason}</p>
+                    <h3 className="font-bold text-lg text-green-700 mb-2 capitalize">{crop.name}</h3>
+                    <div className="space-y-2 text-sm text-gray-700">
+                      <p><strong>Nitrogen (N):</strong> {crop.nRange} kg/ha</p>
+                      <p><strong>Phosphorus (P):</strong> {crop.pRange} kg/ha</p>
+                      <p><strong>Potassium (K):</strong> {crop.kRange} kg/ha</p>
+                      <p><strong>Recommended Fertilizer:</strong> {crop.fertilizer}</p>
+                    </div>
                   </div>
                 ))}
               </CardContent>
