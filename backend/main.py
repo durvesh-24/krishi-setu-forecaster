@@ -2,10 +2,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, File, UploadFile
 from pydantic import BaseModel
 import base64
+from datetime import date
 from crop_recommend import predict_crop
 from weather import weather_forecast
 from leaf_disease_detect import predict_disease
 from leaf_detect import analyze_leaf_species
+from price_forecasting import predict_commodity_price
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -32,6 +34,12 @@ class CropInput(BaseModel):
     humidity: float
     ph: float
     rainfall: float
+
+class WeatherInput(BaseModel):
+    state: str
+    district: str
+    commodity: str
+    date: str = date.today().isoformat()
     
 class CityInput(BaseModel):
     city: str
@@ -115,3 +123,18 @@ async def predict_leaf_species(file: UploadFile = File(...)):
     except Exception as e:
         return {"error": str(e), "detail": "Failed to process image"}
 
+@app.post("/predict-price")
+def predict_price(data: WeatherInput):
+    """
+    Predict commodity price based on state, district, commodity, and date.
+    """
+    try:
+        result = predict_commodity_price(
+            data.state,
+            data.district,
+            data.commodity,
+            data.date
+        )
+        return result
+    except Exception as e:
+        return {"error": str(e), "detail": "Failed to predict price"}
