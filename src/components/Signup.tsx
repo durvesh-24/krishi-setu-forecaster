@@ -41,6 +41,13 @@ export const Signup = ({ setTab }: { setTab: (tab: "signup" | "login") => void }
 
       if (error) throw error;
 
+      if (typeof data === "string" && data.toLowerCase().includes("already registered")) {
+        alert("Phone number already registered. Please login.");
+        setTab("login");
+        return;
+      }
+
+      localStorage.setItem("farmer", JSON.stringify(data[0]));
       navigate("/dashboard");
     } catch (err: any) {
       console.error(err);

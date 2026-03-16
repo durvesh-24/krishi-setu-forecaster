@@ -1,16 +1,20 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  ArrowLeft,
-  User,
-  Globe,
-  History,
-  ChevronRight
-} from "lucide-react";
+import { ArrowLeft, User, Globe, History, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import Footer from "@/components/Footer";
+
+interface User {
+  id: string;
+  name: string;
+  phone: string;
+  state: string;
+  acres: number;
+  language: string;
+  created_at: string;
+}
 
 declare global {
   interface Window {
@@ -21,6 +25,13 @@ declare global {
 const Profile = () => {
   const navigate = useNavigate();
   const [showLang, setShowLang] = useState(false);
+
+  const rawUser = localStorage.getItem("farmer");
+  if (!rawUser) {
+    navigate("/login");
+    return null;
+  }
+  const user: User = JSON.parse(rawUser);
 
   const changeLanguage = (lang: "en" | "mr" | "hi") => {
     if (lang === "en") {
@@ -33,15 +44,28 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-muted pb-24">
       {/* Header */}
-      <div className="bg-background p-4 flex items-center gap-4 border-b">
+      <div className="bg-background p-4 flex items-center justify-between gap-4 border-b">
+        <div className="flex items-center justify-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/dashboard")}
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </Button>
+          <h1 className="text-xl font-bold">Profile</h1>
+        </div>
+
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => navigate("/dashboard")}
+          onClick={() => {
+            localStorage.removeItem("farmer");
+            navigate("/");
+          }}
         >
-          <ArrowLeft className="w-6 h-6" />
+          Logout
         </Button>
-        <h1 className="text-xl font-bold">Profile</h1>
       </div>
 
       <div className="p-4 space-y-6">
@@ -55,13 +79,14 @@ const Profile = () => {
               <div className="mx-auto w-24 h-24 rounded-full bg-primary flex items-center justify-center">
                 <User className="w-12 h-12 text-primary-foreground" />
               </div>
-              <h2 className="text-2xl font-bold">Kabir Singh</h2>
-              <p className="text-primary font-medium">Farmer, Maharashtra</p>
+              <h2 className="text-2xl font-bold">{user.name}</h2>
+              <p className="text-primary font-medium">Farmer, {user.state}</p>
               <p className="text-muted-foreground text-sm">
-                Wheat, Rice & Cotton • 8 Acres
+                {user.acres} Acres
               </p>
               <p className="text-xs text-muted-foreground">
-                📍 Jalgaon, Maharashtra • Member since 2022
+                📍 {user.state} • Member since{" "}
+                {new Date(user.created_at).getFullYear()}
               </p>
             </CardContent>
           </Card>
@@ -70,9 +95,9 @@ const Profile = () => {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4">
           {[
-            { label: "Crops", value: "3" },
-            { label: "Acres", value: "8" },
-            { label: "Years", value: "12" },
+            // { label: "Crops", value: "3" },
+            { label: "Acres", value: user.acres.toString() },
+            // { label: "Years", value: "12" },
           ].map((item, i) => (
             <motion.div
               key={i}
@@ -145,26 +170,6 @@ const Profile = () => {
                 </button>
               </motion.div>
             )}
-          </CardContent>
-        </Card>
-
-        {/* History */}
-        <Card className="border-none shadow-md">
-          <CardContent className="p-0">
-            <button className="w-full flex items-center justify-between p-4 hover:bg-muted">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <History className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <p className="font-semibold">History</p>
-                  <p className="text-sm text-muted-foreground">
-                    Past queries & advisories
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5" />
-            </button>
           </CardContent>
         </Card>
       </div>

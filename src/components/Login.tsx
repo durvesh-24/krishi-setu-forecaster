@@ -27,6 +27,13 @@ export const Login = ({
         p_password: password,
       });
       if (error) throw error;
+
+      if (typeof data === "string" && data.toLowerCase().includes("invalid")) {
+        alert("Invalid phone number or password.");
+        return;
+      }
+
+      localStorage.setItem("farmer", JSON.stringify(data[0]));
       navigate("/dashboard");
     } catch (err: any) {
       console.error(err);
