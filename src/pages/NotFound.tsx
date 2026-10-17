@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Sprout } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useTranslation } from "@/i18n/LanguageProvider";
+import { useTranslation } from "@/i18n/context";
 
 const NotFound = () => {
   const location = useLocation();

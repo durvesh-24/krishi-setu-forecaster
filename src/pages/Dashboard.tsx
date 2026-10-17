@@ -15,7 +15,7 @@ import {
 import { Link } from "react-router-dom";
 import { PageLayout } from "@/components/PageLayout";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useTranslation } from "@/i18n/LanguageProvider";
+import { useTranslation } from "@/i18n/context";
 import type { TranslationKey } from "@/i18n/translations";
 import { getFarmer } from "@/lib/user";
 import { describeWeather, farmingTips, fetchWeather, savedWeatherQuery } from "@/lib/weather";

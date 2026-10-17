@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { useTranslation } from "@/i18n/LanguageProvider";
+import { useTranslation } from "@/i18n/context";
 import type { TranslationKey } from "@/i18n/translations";
 import { api, apiErrorMessage } from "@/lib/api";
 import { getFarmer } from "@/lib/user";

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { useTranslation } from "@/i18n/LanguageProvider";
+import { useTranslation } from "@/i18n/context";
 
 interface AppHeaderProps {
   title?: string;

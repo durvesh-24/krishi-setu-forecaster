@@ -1,7 +1,7 @@
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import { useTranslation } from "@/i18n/LanguageProvider";
+import { useTranslation } from "@/i18n/context";
 import { cn } from "@/lib/utils";
 
 export const ThemeToggle = ({ className }: { className?: string }) => {

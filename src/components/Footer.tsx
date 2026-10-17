@@ -1,6 +1,6 @@
 import { Bug, CloudSun, Home, Leaf, LineChart, User } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useTranslation } from "@/i18n/LanguageProvider";
+import { useTranslation } from "@/i18n/context";
 import type { TranslationKey } from "@/i18n/translations";
 import { cn } from "@/lib/utils";
 

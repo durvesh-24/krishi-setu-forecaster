@@ -1,10 +1,6 @@
-export const LANGUAGES = [
-  { code: "en", label: "English", native: "English" },
-  { code: "hi", label: "Hindi", native: "हिन्दी" },
-  { code: "mr", label: "Marathi", native: "मराठी" },
-] as const;
+import type { Language } from "./languages";
 
-export type Language = (typeof LANGUAGES)[number]["code"];
+export { LANGUAGES, type Language } from "./languages";
 
 const en = {
   // Common

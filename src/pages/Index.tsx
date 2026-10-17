@@ -5,7 +5,7 @@ import { Signup } from "@/components/Signup";
 import { Login } from "@/components/Login";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { useTranslation } from "@/i18n/LanguageProvider";
+import { useTranslation } from "@/i18n/context";
 import { getFarmer } from "@/lib/user";
 
 const Index = () => {

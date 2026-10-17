@@ -16,7 +16,7 @@ import { PageLayout } from "@/components/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { useTranslation } from "@/i18n/LanguageProvider";
+import { useTranslation } from "@/i18n/context";
 import { getDiseaseInfo } from "@/i18n/diseases";
 import { api, apiErrorMessage } from "@/lib/api";
 import { cn } from "@/lib/utils";

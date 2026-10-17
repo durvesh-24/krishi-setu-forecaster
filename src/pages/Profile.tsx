@@ -4,7 +4,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { PageLayout } from "@/components/PageLayout";
 import { Button } from "@/components/ui/button";
-import { useTranslation } from "@/i18n/LanguageProvider";
+import { useTranslation } from "@/i18n/context";
 import { LANGUAGES } from "@/i18n/translations";
 import { clearFarmer, getFarmer } from "@/lib/user";
 import { cn } from "@/lib/utils";

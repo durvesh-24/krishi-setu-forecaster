@@ -92,6 +92,10 @@ So the rain problem is handled in three ways: the data refreshes **every day** f
 drop after rain becomes the new starting point; rain is used in the model wherever it actually improves
 accuracy; and the app warns the farmer when the forecast shows **heavy rain** in the next 7 days.
 
+## Deploying
+
+Website on Vercel, API on Hugging Face Spaces, login on Supabase: see [DEPLOY.md](DEPLOY.md).
+
 ## Running locally
 
 ### 1. Backend (Python 3.11)

@@ -1,34 +1,10 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { LANGUAGES, translations, type Language, type TranslationKey } from "./translations";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { translations, type Language } from "./translations";
+import { isLanguage, LanguageContext, type LanguageContextValue, type Vars } from "./context";
 
 const STORAGE_KEY = "krishisetu-language";
 
 const LOCALES: Record<Language, string> = { en: "en-IN", hi: "hi-IN", mr: "mr-IN" };
-
-type Vars = Record<string, string | number>;
-
-interface LanguageContextValue {
-  lang: Language;
-  locale: string;
-  setLang: (lang: Language) => void;
-  t: (key: TranslationKey, vars?: Vars) => string;
-  /** Translate a key that is built at runtime (e.g. crop names); falls back to the given text. */
-  tr: (key: string, fallback: string) => string;
-}
-
-const LanguageContext = createContext<LanguageContextValue | null>(null);
-
-const isLanguage = (value: unknown): value is Language =>
-  LANGUAGES.some((l) => l.code === value);
-
-/** Map the language saved at sign-up ("Hindi", "Marathi", "English") to a code. */
-export const languageFromName = (name?: string | null): Language | null => {
-  if (!name) return null;
-  const match = LANGUAGES.find(
-    (l) => l.code === name.toLowerCase() || l.label.toLowerCase() === name.toLowerCase(),
-  );
-  return match ? match.code : null;
-};
 
 const readStoredLanguage = (): Language => {
   try {
@@ -76,8 +52,3 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 };
 
-export const useTranslation = () => {
-  const ctx = useContext(LanguageContext);
-  if (!ctx) throw new Error("useTranslation must be used inside LanguageProvider");
-  return ctx;
-};

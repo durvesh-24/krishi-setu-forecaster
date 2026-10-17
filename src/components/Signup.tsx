@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { languageFromName, useTranslation } from "@/i18n/LanguageProvider";
+import { languageFromName, useTranslation } from "@/i18n/context";
 import { LANGUAGES } from "@/i18n/translations";
 import { INDIAN_STATES } from "@/data/indian_states";
 import { supabase } from "@/lib/supabase";
