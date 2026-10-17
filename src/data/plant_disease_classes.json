@@ -51,7 +51,7 @@
         "disease_name": "mango_healthy",
         "description": "The mango leaf is healthy.",
         "treatement": "Maintain proper fertilization schedule.",
-        "waterLevel ": "Water requirement: Light but deep irrigation (Water every 7-10 days; avoid excess moisture)"
+        "waterLevel": "Water requirement: Light but deep irrigation (Water every 7-10 days; avoid excess moisture)"
     },
     {
         "disease_name": "mango_Powderly_Mildew",

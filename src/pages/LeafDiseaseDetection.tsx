@@ -1,453 +1,283 @@
-import { useState, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useRef, useState } from "react";
+import { motion } from "framer-motion";
 import {
-  ArrowLeft,
-  Upload,
   AlertCircle,
-  CheckCircle,
+  AlertTriangle,
+  CheckCircle2,
+  Droplets,
+  FlaskConical,
+  ImagePlus,
+  Info,
   Loader2,
+  Stethoscope,
+  Upload,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { PageLayout } from "@/components/PageLayout";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import axios from "axios";
-import diseaseClasses from "@/data/plant_disease_classes.json";
-import Footer from "@/components/Footer";
+import { useTranslation } from "@/i18n/LanguageProvider";
+import { getDiseaseInfo } from "@/i18n/diseases";
+import { api, apiErrorMessage } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
-interface PredictionResult {
+interface DiseaseResponse {
   disease: string;
-  displayName: string;
+  class?: string;
   confidence: number;
-  description: string;
-  treatment?: string;
-  fertilizerName?: string;
-  waterLevel?: string;
+  alternatives?: { class: string; confidence: number }[];
 }
 
-interface DiseaseInfo {
-  disease_name: string;
-  description: string;
-  treatement: string;
-  fertilizerName?: string;
-  waterLevel?: string;
-}
-
-const getDiseaseDisplayName = (rawName: string) => {
-  if (!rawName) return "Unknown";
-
-  const normalized = rawName.trim();
-  const parts = normalized.split("_");
-  const diseaseParts = parts.length > 1 ? parts.slice(1) : parts;
-  const base = diseaseParts.join(" ");
-
-  // Normalize spacing and punctuation
-  const spaced = base
-    .replace(/_/g, " ")
-    .replace(/\s+/g, " ")
-    .replace(/\s*\(\s*/g, " (")
-    .replace(/\s*\)\s*/g, ")")
-    .trim();
-
-  return spaced
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-};
+const MAX_SIZE = 10 * 1024 * 1024;
+const LOW_CONFIDENCE = 0.5;
 
 const LeafDiseaseDetection = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
+  const { t, lang } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [showResults, setShowResults] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [prediction, setPrediction] = useState<PredictionResult | null>(null);
-  const [leafSpecies, setLeafSpecies] = useState<{
-    species: string;
-    confidence: number;
-  } | null>(null);
+  const [prediction, setPrediction] = useState<DiseaseResponse | null>(null);
+  const [species, setSpecies] = useState<string | null>(null);
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const acceptFile = (file?: File | null) => {
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
-      setError("Please select a valid image file");
-      toast({
-        title: "Invalid File",
-        description: "Please upload an image file (PNG, JPG, etc.)",
-        variant: "destructive",
-      });
+      setError(t("disease.invalid"));
+      toast({ title: t("disease.invalidTitle"), description: t("disease.invalid"), variant: "destructive" });
       return;
     }
-
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      setError("File size too large. Maximum 10MB allowed.");
-      toast({
-        title: "File Too Large",
-        description: "Please upload an image smaller than 10MB",
-        variant: "destructive",
-      });
+    if (file.size > MAX_SIZE) {
+      setError(t("disease.tooLarge"));
+      toast({ title: t("disease.tooLargeTitle"), description: t("disease.tooLarge"), variant: "destructive" });
       return;
     }
 
     setImageFile(file);
     setError(null);
-
-    // Preview the image
     const reader = new FileReader();
-    reader.onload = (e) => {
-      setSelectedImage(e.target?.result as string);
-    };
+    reader.onload = (e) => setSelectedImage(e.target?.result as string);
     reader.readAsDataURL(file);
   };
 
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    acceptFile(e.dataTransfer.files?.[0]);
+  };
+
+  const reset = () => {
+    setSelectedImage(null);
+    setImageFile(null);
+    setPrediction(null);
+    setSpecies(null);
+    setError(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!imageFile) {
-      setError("Please select an image first");
-      return;
-    }
+    if (!imageFile) return;
 
     setLoading(true);
     setError(null);
 
-    try {
-      const formData = new FormData();
-      formData.append("file", imageFile);
+    const formData = new FormData();
+    formData.append("file", imageFile);
 
-      const [diseaseResult, leafResult] = await Promise.allSettled([
-        axios.post(
-          `${import.meta.env.VITE_BACKEND}/predict-disease`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          },
-        ),
-        axios.post(`${import.meta.env.VITE_BACKEND}/predict-leaf`, formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }),
-      ]);
+    const [diseaseResult, leafResult] = await Promise.allSettled([
+      api.post<DiseaseResponse>("/predict-disease", formData),
+      api.post<{ species: string; confidence: number }>("/predict-leaf", formData),
+    ]);
 
-      if (leafResult.status === "fulfilled") {
-        setLeafSpecies({
-          species: leafResult.value.data.species || "",
-          confidence: leafResult.value.data.confidence ?? 0,
-        });
-      } else {
-        console.warn("Leaf species prediction failed", leafResult.reason);
-        setLeafSpecies(null);
-      }
+    setSpecies(
+      leafResult.status === "fulfilled" && leafResult.value.data.species && leafResult.value.data.confidence > 0
+        ? leafResult.value.data.species
+        : null,
+    );
 
-      if (diseaseResult.status !== "fulfilled") {
-        // If disease prediction failed, throw to be caught below and show error
-        throw diseaseResult.reason;
-      }
-
-      const res = diseaseResult.value;
-      // Get disease name from backend
-      const predictedDisease =
-        res.data.disease || res.data.prediction || res.data.class;
-
-      // Map disease info from JSON file
-      const diseaseInfo = (diseaseClasses as DiseaseInfo[]).find(
-        (d) => d.disease_name === predictedDisease,
-      );
-
-      setPrediction({
-        disease: predictedDisease,
-        displayName: getDiseaseDisplayName(predictedDisease),
-        confidence: res.data.confidence || res.data.probability * 100,
-        description: diseaseInfo?.description || "",
-        treatment: diseaseInfo?.treatement || "",
-        fertilizerName: diseaseInfo?.fertilizerName || "",
-        waterLevel: diseaseInfo?.waterLevel || "",
-      });
-
-      setShowResults(true);
-      toast({
-        title: "Analysis Complete",
-        description: "Leaf disease prediction completed successfully",
-      });
-    } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.detail ||
-        "Failed to analyze image. Please try again.";
-      setError(errorMessage);
-      toast({
-        title: "Analysis Failed",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+    if (diseaseResult.status === "fulfilled") {
+      const data = diseaseResult.value.data;
+      setPrediction({ ...data, disease: (data.disease || data.class || "").trim() });
+      toast({ title: t("disease.doneTitle"), description: t("disease.doneDesc") });
+    } else {
+      const message = apiErrorMessage(diseaseResult.reason, t("disease.failed")) ?? t("common.serverError");
+      setError(message);
+      toast({ title: t("disease.failedTitle"), description: message, variant: "destructive" });
     }
+    setLoading(false);
   };
 
+  const info = prediction ? getDiseaseInfo(prediction.disease, lang) : null;
+  const confidencePct = prediction ? Math.round(prediction.confidence * 100) : 0;
+
   return (
-    <div className="min-h-screen bg-muted pb-24">
-      {/* Header */}
-      <div className="bg-primary text-primary-foreground p-4 flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate("/dashboard")}
-          className="text-primary-foreground hover:bg-primary-foreground/20"
-        >
-          <ArrowLeft className="w-6 h-6" />
-        </Button>
-        <h1 className="text-xl font-bold">Leaf Disease Detection</h1>
-      </div>
-
-      <div className="p-4 space-y-4">
-        {!showResults ? (
-          <>
-            <p className="text-center text-muted-foreground">
-              Upload a leaf image to detect diseases
-            </p>
-
-            <Card className="border-none shadow-md">
-              <CardHeader>
-                <CardTitle>Upload Leaf Image</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6 h-full">
-                  <div className="flex w-full h-full gap-6">
-                    {/* Image Upload Area */}
-                    <div
-                      onClick={handleUploadClick}
-                      className="w-full h-full border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all flex items-center justify-center"
-                    >
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageSelect}
-                        className="hidden"
-                      />
-
-                      <div className="space-y-2 h-80 flex flex-col items-center justify-center">
-                        <div className="flex justify-center">
-                          <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-                            <Upload className="w-8 h-8 text-blue-600" />
-                          </div>
-                        </div>
-                        <p className="font-semibold text-gray-700">
-                          Click to upload or drag and drop
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          PNG, JPG, GIF up to 10MB
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Image Preview */}
-                    {selectedImage && (
-                      <div className="w-full flex flex-col space-y-3">
-                        <div className="flex-1 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
-                          <img
-                            src={selectedImage}
-                            alt="Preview"
-                            className="aspect-auto max-w-full max-h-80 object-contain"
-                          />
-                        </div>
-
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full"
-                          onClick={handleUploadClick}
-                        >
-                          Change Image
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Submit Button */}
-                  <Button
-                    type="submit"
-                    className="w-full py-6 text-lg"
-                    size="lg"
-                    disabled={loading || !selectedImage}
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Analyzing...
-                      </>
-                    ) : (
-                      "Analyze Leaf"
-                    )}
-                  </Button>
-
-                  {error && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex gap-2">
-                      <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                      <p className="text-red-700 text-sm">{error}</p>
-                    </div>
-                  )}
-                </form>
-              </CardContent>
-            </Card>
-          </>
-        ) : (
-          <div className="space-y-4">
-            {/* Results Display */}
-            {prediction && (
-              <>
-                {leafSpecies && (
-                  <Card className="border-none shadow-md bg-blue-50 border-l-4 border-l-blue-500">
-                    <CardHeader>
-                      <CardTitle className="text-blue-700">
-                        Leaf Species
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <p className="text-sm text-gray-700">
-                        <span className="font-semibold">Species:</span>{" "}
-                        {leafSpecies.species}
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {prediction.displayName.toLowerCase() === "healthy" ? (
-                  <Card className="border-none shadow-md bg-green-50 border-l-4 border-l-green-500">
-                    <CardHeader>
-                      <CardTitle className="text-green-700 flex items-center gap-2">
-                        <CheckCircle className="w-6 h-6" />
-                        Healthy Leaf Detected
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="bg-white p-4 rounded-lg">
-                        <p className="text-sm text-gray-700">
-                          <span className="font-semibold">Status: </span>
-                          Your leaf appears to be healthy with no signs of
-                          disease.
-                        </p>
-
-                        {prediction.waterLevel && (
-                          <p className="text-sm text-gray-600 mt-1">
-                            <span className="font-semibold">
-                              Watering Instructions: &nbsp;
-                            </span>
-                            {prediction.waterLevel}
-                          </p>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <Card className="border-none shadow-md bg-red-100 border-l-4 border-l-red-500 p-3">
-                    <CardContent className="space-y-4">
-                      <div className="bg-white p-4 rounded-lg space-y-3">
-                        <div>
-                          <p className="font-semibold text-lg text-red-700">
-                            {prediction.displayName}
-                          </p>
-                        </div>
-
-                        {prediction.description && (
-                          <div>
-                            <p className="text-sm font-semibold text-gray-700">
-                              Description:
-                            </p>
-                            <p className="text-sm text-gray-600 mt-1">
-                              {prediction.description}
-                            </p>
-                          </div>
-                        )}
-
-                        {prediction.treatment && (
-                          <div>
-                            <p className="text-sm font-semibold text-gray-700">
-                              Recommended Treatment:
-                            </p>
-                            <p className="text-sm text-gray-600 mt-1">
-                              {prediction.treatment}
-                            </p>
-                          </div>
-                        )}
-
-                        {prediction.fertilizerName && (
-                          <div>
-                            <p className="text-sm font-semibold text-gray-700">
-                              Recommended Fertilizer:
-                            </p>
-                            <p className="text-sm text-gray-600 mt-1">
-                              {prediction.fertilizerName}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Image Preview in Results */}
-                <Card className="border-none shadow-md">
-                  <CardHeader>
-                    <CardTitle>Analyzed Image</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div
-                      className="bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center"
-                      style={{ maxHeight: "300px" }}
-                    >
-                      <img
-                        src={selectedImage || ""}
-                        alt="Analyzed"
-                        className="max-w-full max-h-80 object-contain"
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Action Buttons */}
-                <div className="space-y-2">
-                  <Button
-                    onClick={() => {
-                      setShowResults(false);
-                      setSelectedImage(null);
-                      setImageFile(null);
-                      setPrediction(null);
-                      setLeafSpecies(null);
-                      setError(null);
-                    }}
-                    className="w-full"
-                  >
-                    Analyze Another Leaf
-                  </Button>
-                  <Button
-                    onClick={() => navigate("/dashboard")}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    Back to Dashboard
-                  </Button>
-                </div>
-              </>
-            )}
+    <PageLayout title={t("disease.title")}>
+      {!prediction || !info ? (
+        <form onSubmit={handleSubmit} className="card-elevated space-y-5 p-5">
+          <div>
+            <h2 className="font-semibold">{t("disease.upload")}</h2>
+            <p className="text-sm text-muted-foreground">{t("disease.intro")}</p>
           </div>
-        )}
-      </div>
-      <Footer currentPage="/leaf-disease-detection" />
-    </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={(e) => acceptFile(e.target.files?.[0])}
+            className="hidden"
+          />
+
+          {selectedImage ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-center overflow-hidden rounded-xl bg-muted">
+                <img src={selectedImage} alt="Preview" className="max-h-80 w-auto object-contain" />
+              </div>
+              <Button type="button" variant="outline" className="w-full gap-2" onClick={() => fileInputRef.current?.click()}>
+                <ImagePlus className="h-4 w-4" /> {t("disease.change")}
+              </Button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragging(true);
+              }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={handleDrop}
+              className={cn(
+                "flex h-72 w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-8 text-center transition-colors",
+                dragging ? "border-primary bg-primary/10" : "border-border hover:border-primary/60 hover:bg-primary/5",
+              )}
+            >
+              <div className="icon-chip h-16 w-16 rounded-full bg-tone-sky/15 text-tone-sky">
+                <Upload className="h-8 w-8" />
+              </div>
+              <p className="font-semibold">{t("disease.drop")}</p>
+              <p className="text-sm text-muted-foreground">{t("disease.formats")}</p>
+            </button>
+          )}
+
+          <Button type="submit" className="h-12 w-full text-base font-semibold" size="lg" disabled={loading || !imageFile}>
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t("disease.analyzing")}
+              </>
+            ) : (
+              t("disease.analyze")
+            )}
+          </Button>
+
+          {error && (
+            <div className="flex gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <p>{error}</p>
+            </div>
+          )}
+        </form>
+      ) : (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+          <section className="card-elevated overflow-hidden">
+            <div className="grid sm:grid-cols-[200px_1fr]">
+              {selectedImage && (
+                <div className="flex items-center justify-center bg-muted">
+                  <img src={selectedImage} alt={t("disease.image")} className="max-h-60 w-full object-cover sm:h-full" />
+                </div>
+              )}
+              <div className="space-y-4 p-5">
+                <div
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold",
+                    info.healthy ? "bg-tone-green/15 text-tone-green" : "bg-tone-rose/15 text-tone-rose",
+                  )}
+                >
+                  {info.healthy ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
+                  {info.healthy ? t("disease.healthy") : t("disease.detected")}
+                </div>
+
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    {info.plant}
+                    {species && (
+                      <>
+                        {" · "}
+                        <span title={t("disease.species")}>{species}</span>
+                      </>
+                    )}
+                  </p>
+                  <h2 className="text-2xl font-bold">{info.healthy ? t("disease.healthy") : info.name}</h2>
+                  {info.healthy && <p className="mt-1 text-sm text-muted-foreground">{t("disease.healthyDesc")}</p>}
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{t("disease.confidence")}</span>
+                    <span className="font-semibold">{confidencePct}%</span>
+                  </div>
+                  <Progress value={confidencePct} className="h-2" />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {prediction.confidence < LOW_CONFIDENCE && (
+            <div className="flex gap-2 rounded-xl border border-tone-amber/40 bg-tone-amber/10 p-4 text-sm">
+              <Info className="mt-0.5 h-4 w-4 shrink-0 text-tone-amber" />
+              <p>{t("disease.lowConfidence")}</p>
+            </div>
+          )}
+
+          <section className="card-elevated divide-y">
+            {[
+              { icon: Info, title: t("disease.about"), body: info.description, tone: "text-tone-sky bg-tone-sky/15" },
+              { icon: Stethoscope, title: t("disease.treatment"), body: info.treatment, tone: "text-tone-green bg-tone-green/15" },
+              { icon: FlaskConical, title: t("disease.product"), body: info.product, tone: "text-tone-violet bg-tone-violet/15" },
+              { icon: Droplets, title: t("disease.watering"), body: info.water, tone: "text-tone-sky bg-tone-sky/15" },
+            ]
+              .filter((row) => row.body)
+              .map(({ icon: Icon, title, body, tone }) => (
+                <div key={title} className="flex gap-3 p-4">
+                  <div className={`icon-chip h-9 w-9 ${tone}`}>
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">{title}</p>
+                    <p className="mt-0.5 text-sm text-muted-foreground">{body}</p>
+                  </div>
+                </div>
+              ))}
+          </section>
+
+          {prediction.alternatives && prediction.alternatives.length > 0 && (
+            <section className="card-elevated space-y-3 p-5">
+              <h3 className="text-sm font-semibold">{t("disease.alternatives")}</h3>
+              {prediction.alternatives.map((alt) => {
+                const a = getDiseaseInfo(alt.class, lang);
+                return (
+                  <div key={alt.class} className="flex items-center justify-between gap-3 text-sm">
+                    <span>
+                      {a.plant} — {a.healthy ? t("disease.healthy") : a.name}
+                    </span>
+                    <span className="text-muted-foreground">{Math.round(alt.confidence * 100)}%</span>
+                  </div>
+                );
+              })}
+            </section>
+          )}
+
+          <Button onClick={reset} className="h-11 w-full">
+            {t("disease.another")}
+          </Button>
+        </motion.div>
+      )}
+    </PageLayout>
   );
 };
 

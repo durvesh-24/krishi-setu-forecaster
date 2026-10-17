@@ -13,7 +13,17 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['"Plus Jakarta Sans"', '"Noto Sans Devanagari"', "system-ui", "sans-serif"],
+      },
       colors: {
+        tone: {
+          green: "hsl(var(--tone-green))",
+          sky: "hsl(var(--tone-sky))",
+          rose: "hsl(var(--tone-rose))",
+          amber: "hsl(var(--tone-amber))",
+          violet: "hsl(var(--tone-violet))",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -62,6 +72,8 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "calc(var(--radius) + 4px)",
+        "2xl": "calc(var(--radius) + 8px)",
       },
       keyframes: {
         "accordion-down": {

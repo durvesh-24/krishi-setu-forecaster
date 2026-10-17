@@ -1,13 +1,10 @@
-import torch
-import torchvision
-import torch.nn as nn
-from torchvision import transforms
-from PIL import Image
 import io
-from typing import Dict
 import os
+from typing import Dict
 
-# class labels from training
+from PIL import Image
+
+# class labels from training (order must match the trained model)
 CLASS_NAMES = [
     'Cicer arietinum_healthy',
     'Cicer arietinum_Alternaria_Leaf_Spot',
@@ -30,48 +27,62 @@ CLASS_NAMES = [
     'Jowar_Dry_leaves'
 ]
 
-# optional disease descriptions (can be trimmed if not needed)
-DISEASE_INFO = {
-    cls: {"name": cls, "description": "", "treatment": ""}
-    for cls in CLASS_NAMES
-}
+MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "LDD_resnet50.pth")
 
-# load model once on import
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-MODEL_PATH = os.path.join(os.path.dirname(__file__), "LDD_resnet50.pth")
+# The model is loaded on first use so the rest of the API starts even if
+# PyTorch is not installed or the weights file is missing.
+_model = None
+_device = None
+_transform = None
 
-model = torchvision.models.resnet50(pretrained=False)
-num_features = model.fc.in_features
-model.fc = nn.Linear(num_features, len(CLASS_NAMES))
-if os.path.exists(MODEL_PATH):
-    model.load_state_dict(torch.load(MODEL_PATH, map_location=DEVICE))
-model = model.to(DEVICE)
-model.eval()
 
-# transformation matching Colab code
-TEST_TRANSFORM = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-])
+def _load_model():
+    global _model, _device, _transform
+    if _model is not None:
+        return
+
+    import torch
+    import torch.nn as nn
+    import torchvision
+    from torchvision import transforms
+
+    if not os.path.exists(MODEL_PATH):
+        raise FileNotFoundError(f"Model weights not found at {MODEL_PATH}")
+
+    _device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = torchvision.models.resnet50(weights=None)
+    model.fc = nn.Linear(model.fc.in_features, len(CLASS_NAMES))
+    model.load_state_dict(torch.load(MODEL_PATH, map_location=_device))
+    _model = model.to(_device).eval()
+
+    # transformation matching Colab code
+    _transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+    ])
 
 
 def predict_disease(image_data: bytes) -> Dict:
-    """Simple prediction using PyTorch ResNet50, similar to Colab snippet."""
+    """Prediction using PyTorch ResNet50, same as the Colab training notebook."""
+    import torch
+
+    _load_model()
     img = Image.open(io.BytesIO(image_data)).convert("RGB")
-    tensor = TEST_TRANSFORM(img).unsqueeze(0).to(DEVICE)
+    tensor = _transform(img).unsqueeze(0).to(_device)
     with torch.no_grad():
-        outputs = model(tensor)
-        probs = torch.nn.functional.softmax(outputs, dim=1)
-        _, idx = torch.max(outputs, 1)
-        idx = idx.item()
-        confidence = probs[0][idx].item()
-    pred_cls = CLASS_NAMES[idx]
-    info = DISEASE_INFO.get(pred_cls, {})
+        probs = torch.nn.functional.softmax(_model(tensor), dim=1)[0]
+    top = torch.topk(probs, k=3)
+
+    pred_cls = CLASS_NAMES[top.indices[0].item()].strip()
     return {
-        "disease": info.get("name", pred_cls),
+        "disease": pred_cls,
         "class": pred_cls,
-        "confidence": confidence,
-        "description": info.get("description", ""),
-        "treatment": info.get("treatment", ""),
+        "confidence": round(top.values[0].item(), 4),
+        "alternatives": [
+            {"class": CLASS_NAMES[i.item()].strip(), "confidence": round(v.item(), 4)}
+            for v, i in zip(top.values[1:], top.indices[1:])
+        ],
+        "description": "",
+        "treatment": "",
     }

@@ -1,180 +1,127 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, User, Globe, History, ChevronRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useState } from "react";
-import Footer from "@/components/Footer";
-
-interface User {
-  id: string;
-  name: string;
-  phone: string;
-  state: string;
-  acres: number;
-  language: string;
-  created_at: string;
-}
-
-declare global {
-  interface Window {
-    setAppLanguage: (lang: string) => void;
-  }
-}
+import { Calendar, Globe, LogOut, MapPin, Monitor, Moon, Phone, Ruler, Sun } from "lucide-react";
+import { Navigate, useNavigate } from "react-router-dom";
+import { useTheme } from "next-themes";
+import { PageLayout } from "@/components/PageLayout";
+import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/i18n/LanguageProvider";
+import { LANGUAGES } from "@/i18n/translations";
+import { clearFarmer, getFarmer } from "@/lib/user";
+import { cn } from "@/lib/utils";
 
 const Profile = () => {
   const navigate = useNavigate();
-  const [showLang, setShowLang] = useState(false);
+  const { t, lang, setLang } = useTranslation();
+  const { theme, setTheme } = useTheme();
+  const user = getFarmer();
 
-  const rawUser = localStorage.getItem("farmer");
-  if (!rawUser) {
-    navigate("/login");
-    return null;
-  }
-  const user: User = JSON.parse(rawUser);
+  if (!user) return <Navigate to="/" replace />;
 
-  const changeLanguage = (lang: "en" | "mr" | "hi") => {
-    if (lang === "en") {
-      window.setAppLanguage("en");
-    }
-    window.setAppLanguage(lang);
-    setShowLang(false);
+  const logout = () => {
+    clearFarmer();
+    navigate("/", { replace: true });
   };
 
+  const initials = user.name
+    .split(" ")
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  const themes = [
+    { value: "light", label: t("theme.light"), icon: Sun },
+    { value: "dark", label: t("theme.dark"), icon: Moon },
+    { value: "system", label: t("theme.system"), icon: Monitor },
+  ];
+
+  const details = [
+    { icon: Phone, label: t("profile.phone"), value: user.phone },
+    { icon: MapPin, label: t("auth.state"), value: user.state },
+    { icon: Ruler, label: t("profile.acres"), value: String(user.acres) },
+    { icon: Calendar, label: t("profile.memberSince"), value: String(new Date(user.created_at).getFullYear()) },
+  ];
+
   return (
-    <div className="min-h-screen bg-muted pb-24">
-      {/* Header */}
-      <div className="bg-background p-4 flex items-center justify-between gap-4 border-b">
-        <div className="flex items-center justify-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/dashboard")}
-          >
-            <ArrowLeft className="w-6 h-6" />
-          </Button>
-          <h1 className="text-xl font-bold">Profile</h1>
-        </div>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => {
-            localStorage.removeItem("farmer");
-            navigate("/");
-          }}
-        >
-          Logout
+    <PageLayout
+      title={t("profile.title")}
+      actions={
+        <Button variant="ghost" size="sm" onClick={logout} className="gap-1.5 text-destructive hover:text-destructive">
+          <LogOut className="h-4 w-4" />
+          <span className="hidden sm:inline">{t("profile.logout")}</span>
         </Button>
-      </div>
-
-      <div className="p-4 space-y-6">
-        {/* Profile Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <Card className="border-none shadow-md">
-            <CardContent className="pt-6 text-center space-y-3">
-              <div className="mx-auto w-24 h-24 rounded-full bg-primary flex items-center justify-center">
-                <User className="w-12 h-12 text-primary-foreground" />
-              </div>
-              <h2 className="text-2xl font-bold">{user.name}</h2>
-              <p className="text-primary font-medium">Farmer, {user.state}</p>
-              <p className="text-muted-foreground text-sm">
-                {user.acres} Acres
-              </p>
-              <p className="text-xs text-muted-foreground">
-                📍 {user.state} • Member since{" "}
-                {new Date(user.created_at).getFullYear()}
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
-          {[
-            // { label: "Crops", value: "3" },
-            { label: "Acres", value: user.acres.toString() },
-            // { label: "Years", value: "12" },
-          ].map((item, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.1 }}
-            >
-              <Card className="border-none shadow-md text-center">
-                <CardContent className="pt-6">
-                  <p className="text-3xl font-bold">{item.value}</p>
-                  <p className="text-sm text-muted-foreground">{item.label}</p>
-                </CardContent>
-              </Card>
-            </motion.div>
+      }
+    >
+      {/* Profile card */}
+      <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="card-elevated overflow-hidden">
+        <div className="hero-gradient h-20" />
+        <div className="-mt-10 px-5 pb-5 text-center">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border-4 border-card bg-primary text-2xl font-bold text-primary-foreground">
+            {initials || "?"}
+          </div>
+          <h2 className="mt-3 text-2xl font-bold">{user.name}</h2>
+          <p className="font-medium text-primary">{t("profile.farmerFrom", { state: user.state })}</p>
+        </div>
+        <dl className="grid grid-cols-2 border-t sm:grid-cols-4">
+          {details.map(({ icon: Icon, label, value }) => (
+            <div key={label} className="flex flex-col items-center gap-1 border-b p-4 text-center sm:border-b-0 [&:not(:last-child)]:sm:border-r">
+              <Icon className="h-4 w-4 text-muted-foreground" />
+              <dt className="text-xs text-muted-foreground">{label}</dt>
+              <dd className="truncate text-sm font-semibold">{value}</dd>
+            </div>
           ))}
+        </dl>
+      </motion.section>
+
+      {/* Settings */}
+      <section className="card-elevated space-y-5 p-5">
+        <h3 className="font-semibold">{t("profile.settings")}</h3>
+
+        <div className="space-y-2">
+          <p className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <Globe className="h-4 w-4" /> {t("common.language")}
+          </p>
+          <div className="grid grid-cols-3 gap-2">
+            {LANGUAGES.map((l) => (
+              <button
+                key={l.code}
+                onClick={() => setLang(l.code)}
+                className={cn(
+                  "rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors",
+                  lang === l.code ? "border-primary bg-primary/10 text-primary" : "hover:bg-muted",
+                )}
+              >
+                {l.native}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Language Section */}
-        <Card className="border-none shadow-md">
-          <CardContent className="p-0">
-            <button
-              className="w-full flex items-center justify-between p-4"
-              onClick={() => setShowLang(!showLang)}
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Globe className="w-5 h-5 text-primary" />
-                </div>
-                <div className="text-left">
-                  <p className="font-semibold">Language</p>
-                  <p
-                    className="text-sm text-muted-foreground notranslate"
-                    translate="no"
-                  >
-                    English / मराठी / हिन्दी
-                  </p>
-                </div>
-              </div>
-              <ChevronRight
-                className={`w-5 h-5 transition ${showLang ? "rotate-90" : ""}`}
-              />
-            </button>
-
-            {showLang && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                className="border-t"
+        <div className="space-y-2">
+          <p className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <Sun className="h-4 w-4" /> {t("common.theme")}
+          </p>
+          <div className="grid grid-cols-3 gap-2">
+            {themes.map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                onClick={() => setTheme(value)}
+                className={cn(
+                  "flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors",
+                  theme === value ? "border-primary bg-primary/10 text-primary" : "hover:bg-muted",
+                )}
               >
-                <button
-                  className="w-full text-left px-6 py-3 hover:bg-muted notranslate"
-                  translate="no"
-                  onClick={() => changeLanguage("en")}
-                >
-                  English
-                </button>
-                <button
-                  className="w-full text-left px-6 py-3 hover:bg-muted notranslate"
-                  translate="no"
-                  onClick={() => changeLanguage("mr")}
-                >
-                  मराठी
-                </button>
-                <button
-                  className="w-full text-left px-6 py-3 hover:bg-muted notranslate"
-                  translate="no"
-                  onClick={() => changeLanguage("hi")}
-                >
-                  हिन्दी
-                </button>
-              </motion.div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-      <Footer currentPage="/profile" />
-    </div>
+                <Icon className="h-4 w-4" /> {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <Button variant="outline" onClick={logout} className="h-11 w-full gap-2 text-destructive hover:text-destructive">
+        <LogOut className="h-4 w-4" /> {t("profile.logout")}
+      </Button>
+    </PageLayout>
   );
 };
 

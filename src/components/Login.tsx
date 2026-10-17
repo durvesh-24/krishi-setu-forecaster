@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowRight } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { languageFromName, useTranslation } from "@/i18n/LanguageProvider";
 import { supabase } from "@/lib/supabase";
+import { saveFarmer, type Farmer } from "@/lib/user";
 
 export const Login = ({
   setTab,
@@ -12,15 +15,25 @@ export const Login = ({
   setTab: (tab: "signup" | "login") => void;
 }) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { t, setLang } = useTranslation();
   const [formData, setFormData] = useState({ phone: "", password: "" });
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: name === "phone" ? value.replace(/\D/g, "").slice(0, 10) : value });
   };
+
+  const fail = (description: string) =>
+    toast({ title: t("auth.login"), description, variant: "destructive" });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const { phone, password } = formData;
+    if (phone.length !== 10) return fail(t("auth.phoneInvalid"));
+
+    setLoading(true);
     try {
       const { data, error } = await supabase.rpc("signin_farmer", {
         p_phone: phone,
@@ -28,70 +41,80 @@ export const Login = ({
       });
       if (error) throw error;
 
-      if (typeof data === "string" && data.toLowerCase().includes("invalid")) {
-        alert("Invalid phone number or password.");
-        return;
+      const farmer = Array.isArray(data) ? (data[0] as Farmer | undefined) : undefined;
+      if (!farmer || (typeof data === "string" && data.toLowerCase().includes("invalid"))) {
+        return fail(t("auth.invalidLogin"));
       }
 
-      localStorage.setItem("farmer", JSON.stringify(data[0]));
+      saveFarmer(farmer);
+      const preferred = languageFromName(farmer.language);
+      if (preferred) setLang(preferred);
       navigate("/dashboard");
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      alert(err.message);
+      fail(err instanceof Error && err.message ? err.message : t("auth.failed"));
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="w-full max-w-md space-y-6">
-      <h2 className="text-3xl font-bold text-center">Login</h2>
+    <div className="w-full max-w-sm space-y-7">
+      <div className="space-y-1.5 text-center">
+        <h2 className="text-3xl font-bold tracking-tight">{t("auth.loginTitle")}</h2>
+        <p className="text-muted-foreground">{t("auth.loginSubtitle")}</p>
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4 w-full">
-        <div>
-          <Label className="text-xs font-semibold text-stone-500 uppercase tracking-widest">
-            Phone Number
-          </Label>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="login-phone">{t("auth.phone")}</Label>
           <Input
-            type="number"
+            id="login-phone"
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel"
             name="phone"
-            placeholder="9876543210"
+            placeholder={t("auth.phonePlaceholder")}
             value={formData.phone}
             onChange={handleChange}
             required
-            className="mt-1 border-stone-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl bg-stone-50"
+            className="h-11"
           />
         </div>
 
-        <div>
-          <Label className="text-xs font-semibold text-stone-500 uppercase tracking-widest">
-            Password
-          </Label>
+        <div className="space-y-1.5">
+          <Label htmlFor="login-password">{t("auth.password")}</Label>
           <Input
+            id="login-password"
             type="password"
+            autoComplete="current-password"
             name="password"
-            placeholder="Enter your password"
+            placeholder={t("auth.passwordPlaceholder")}
             value={formData.password}
             onChange={handleChange}
             required
-            className="mt-1 border-stone-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl bg-stone-50"
+            className="h-11"
           />
         </div>
 
-        <Button
-          type="submit"
-          className="w-full mt-2 bg-green-600 hover:bg-green-700 text-white rounded-xl py-5 font-semibold text-sm tracking-wide flex items-center justify-center gap-2 transition-all duration-200 shadow-lg shadow-green-600/20"
-        >
-          Login <ArrowRight className="w-4 h-4" />
+        <Button type="submit" size="lg" className="h-11 w-full gap-2 font-semibold" disabled={loading}>
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" /> {t("auth.loggingIn")}
+            </>
+          ) : (
+            <>
+              {t("auth.login")} <ArrowRight className="h-4 w-4" />
+            </>
+          )}
         </Button>
       </form>
 
-      <p className="text-center text-sm">
-        Do not have an account?{" "}
-        <span
-          onClick={() => setTab("signup")}
-          className="text-primary cursor-pointer font-medium"
-        >
-          Sign Up
-        </span>
+      <p className="text-center text-sm text-muted-foreground">
+        {t("auth.noAccount")}{" "}
+        <button type="button" onClick={() => setTab("signup")} className="font-semibold text-primary hover:underline">
+          {t("auth.signUp")}
+        </button>
       </p>
     </div>
   );
