@@ -34,7 +34,13 @@ if (-not $hasPython) {
     Write-Host "    py -3.11 -m pip install -r backend\requirements.txt"
     Read-Host "  Press Enter to close"; exit 1
 }
-if (-not (Get-Command ngrok -ErrorAction SilentlyContinue)) {
+$ngrok = (Get-Command ngrok -ErrorAction SilentlyContinue).Source
+if (-not $ngrok) {
+    # winget sometimes installs ngrok without adding it to PATH
+    $ngrok = Get-ChildItem "$env:LOCALAPPDATA\Microsoft\WinGet\Packages\Ngrok.Ngrok*\ngrok.exe" -ErrorAction SilentlyContinue |
+        Select-Object -First 1 -ExpandProperty FullName
+}
+if (-not $ngrok) {
     Write-Host "  ngrok is not installed. Install it with:  winget install ngrok.ngrok" -ForegroundColor Red
     Read-Host "  Press Enter to close"; exit 1
 }
@@ -73,4 +79,4 @@ Write-Host "  Public API link:  https://$domain" -ForegroundColor Cyan
 Write-Host "  (Vercel's VITE_BACKEND must be exactly this link.)"
 Write-Host "  Keep this window open while the website is in use. Close it to stop."
 Write-Host ""
-ngrok http $port --url "https://$domain"
+& $ngrok http $port --url "https://$domain"
