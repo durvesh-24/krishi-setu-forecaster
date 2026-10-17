@@ -29,7 +29,6 @@ interface DiseaseResponse {
 }
 
 const MAX_SIZE = 10 * 1024 * 1024;
-const LOW_CONFIDENCE = 0.5;
 
 const LeafDiseaseDetection = () => {
   const { toast } = useToast();
@@ -122,7 +121,6 @@ const LeafDiseaseDetection = () => {
         <form onSubmit={handleSubmit} className="card-elevated space-y-5 p-5">
           <div>
             <h2 className="font-semibold">{t("disease.upload")}</h2>
-            <p className="text-sm text-muted-foreground">{t("disease.intro")}</p>
           </div>
 
           <input
@@ -227,12 +225,6 @@ const LeafDiseaseDetection = () => {
             </div>
           </section>
 
-          {prediction.confidence < LOW_CONFIDENCE && (
-            <div className="flex gap-2 rounded-xl border border-tone-amber/40 bg-tone-amber/10 p-4 text-sm">
-              <Info className="mt-0.5 h-4 w-4 shrink-0 text-tone-amber" />
-              <p>{t("disease.lowConfidence")}</p>
-            </div>
-          )}
 
           <section className="card-elevated divide-y">
             {[

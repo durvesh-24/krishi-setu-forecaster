@@ -63,9 +63,13 @@ export const Signup = ({ setTab }: { setTab: (tab: "signup" | "login") => void }
 
       if (error) throw error;
 
-      if (typeof data === "string" && data.toLowerCase().includes("already registered")) {
-        toast({ title: t("auth.signUp"), description: t("auth.alreadyRegistered") });
-        setTab("login");
+      if (typeof data === "string") {
+        if (data.toLowerCase().includes("already registered")) {
+          toast({ title: t("auth.signUp"), description: t("auth.alreadyRegistered") });
+          setTab("login");
+        } else {
+          fail(data);
+        }
         return;
       }
 

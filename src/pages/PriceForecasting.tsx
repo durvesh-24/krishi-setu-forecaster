@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { AlertTriangle, Loader2, MapPin, TrendingDown, TrendingUp } from "lucide-react";
+import { CloudRain, Loader2, MapPin, TrendingDown, TrendingUp } from "lucide-react";
 import {
   CartesianGrid,
   Legend,
@@ -41,9 +41,22 @@ interface PricePoint {
   price: number;
 }
 
+interface OutlookPoint extends PricePoint {
+  rain_mm?: number | null;
+  rain_effect?: number | null;
+  heavy_rain?: boolean;
+  weather_source?: string;
+}
+
 interface PriceResult {
   predicted_price: number;
-  outlook?: PricePoint[];
+  rain_mm?: number | null;
+  rain_7d_mm?: number | null;
+  rain_effect?: number | null;
+  rain_in_model?: boolean;
+  heavy_rain_days?: string[];
+  weather_source?: string;
+  outlook?: OutlookPoint[];
   history?: PricePoint[];
   last_known_price?: number;
   last_data_date?: string;
@@ -110,6 +123,10 @@ const PriceForecasting = () => {
     (result.outlook ?? []).forEach((p) => rows.push({ date: p.date, forecast: p.price }));
     return rows;
   }, [result]);
+
+  const chartSpansYear =
+    chartData.length > 1 &&
+    new Date(chartData[chartData.length - 1].date).getTime() - new Date(chartData[0].date).getTime() > 180 * 864e5;
 
   const change = result?.last_known_price
     ? ((result.predicted_price - result.last_known_price) / result.last_known_price) * 100
@@ -272,11 +289,64 @@ const PriceForecasting = () => {
             )}
           </section>
 
-          {result.last_data_date && (result.days_since_data ?? 0) > 60 && (
-            <div className="flex gap-2 rounded-xl border border-tone-amber/40 bg-tone-amber/10 p-4 text-sm">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-tone-amber" />
-              <p>{t("price.stale", { date: fmtDate(result.last_data_date) })}</p>
-            </div>
+          {/* Rain */}
+          {result.weather_source && result.weather_source !== "unavailable" && (
+            <section className="card-elevated space-y-3 p-5">
+              <h3 className="flex items-center gap-2 font-semibold">
+                <CloudRain className="h-5 w-5 text-tone-sky" /> {t("price.rainTitle")}
+              </h3>
+
+              {result.heavy_rain_days && result.heavy_rain_days.length > 0 && (
+                <div className="flex gap-2 rounded-xl border border-tone-sky/40 bg-tone-sky/10 p-3 text-sm">
+                  <CloudRain className="mt-0.5 h-4 w-4 shrink-0 text-tone-sky" />
+                  <p>
+                    {t("price.heavyRain", {
+                      dates: result.heavy_rain_days
+                        .map((d) => fmtDate(d, { day: "numeric", month: "short" }))
+                        .join(", "),
+                    })}
+                  </p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-xl bg-muted/60 p-3">
+                  <p className="text-xs text-muted-foreground">{t("price.rainDay")}</p>
+                  <p className="mt-0.5 text-lg font-bold">{(result.rain_mm ?? 0).toFixed(1)} mm</p>
+                </div>
+                <div className="rounded-xl bg-muted/60 p-3">
+                  <p className="text-xs text-muted-foreground">{t("price.rainWeekLabel")}</p>
+                  <p className="mt-0.5 text-lg font-bold">{(result.rain_7d_mm ?? 0).toFixed(0)} mm</p>
+                </div>
+              </div>
+
+              {result.rain_in_model && result.rain_effect != null ? (
+                <p className="text-sm">
+                  {t("price.rainEffect")}:{" "}
+                  <span
+                    className={cn(
+                      "font-semibold",
+                      Math.abs(result.rain_effect) < 1 ? "" : result.rain_effect > 0 ? "text-tone-green" : "text-tone-rose",
+                    )}
+                  >
+                    {result.rain_effect >= 0 ? "+" : "−"}₹{Math.abs(Math.round(result.rain_effect)).toLocaleString(locale)}
+                  </span>{" "}
+                  <span className="text-muted-foreground">{t("price.rainVsDry")}</span>
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">{t("price.rainChecked")}</p>
+              )}
+
+              <p className="text-xs text-muted-foreground">
+                {t(
+                  result.weather_source === "forecast"
+                    ? "price.srcForecast"
+                    : result.weather_source === "recorded"
+                      ? "price.srcRecorded"
+                      : "price.srcSeasonal",
+                )}
+              </p>
+            </section>
           )}
 
           {/* Chart */}
@@ -289,7 +359,9 @@ const PriceForecasting = () => {
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                     <XAxis
                       dataKey="date"
-                      tickFormatter={(d) => fmtDate(d, { day: "numeric", month: "short" })}
+                      tickFormatter={(d) =>
+                        fmtDate(d, chartSpansYear ? { month: "short", year: "2-digit" } : { day: "numeric", month: "short" })
+                      }
                       tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
                       axisLine={{ stroke: "hsl(var(--border))" }}
                       tickLine={false}
@@ -348,9 +420,14 @@ const PriceForecasting = () => {
                   const prev = i === 0 ? result.last_known_price : result.outlook![i - 1].price;
                   const up = prev === undefined || p.price >= prev;
                   return (
-                    <li key={p.date} className="flex items-center justify-between py-2.5 text-sm">
+                    <li key={p.date} className="flex items-center gap-3 py-2.5 text-sm">
                       <span>{fmtDate(p.date, { weekday: "short", day: "numeric", month: "short" })}</span>
-                      <span className="flex items-center gap-2 font-semibold">
+                      {p.rain_mm != null && p.rain_mm >= 1 && (
+                        <span className="flex items-center gap-1 text-xs text-tone-sky">
+                          <CloudRain className="h-3.5 w-3.5" /> {p.rain_mm.toFixed(0)} mm
+                        </span>
+                      )}
+                      <span className="ml-auto flex items-center gap-2 font-semibold">
                         {rupees(p.price)}
                         {up ? (
                           <TrendingUp className="h-4 w-4 text-tone-green" />

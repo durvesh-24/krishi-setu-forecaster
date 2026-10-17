@@ -1,32 +1,40 @@
 """
-Clean the market price dataset and export every dataset used by KrishiSetu
-into a single Excel workbook (dataset/KrishiSetu_Dataset.xlsx).
+Export every dataset used by KrishiSetu into one Excel workbook
+(dataset/KrishiSetu_Dataset.xlsx). Every row and column is visible, each
+sheet has a frozen, filterable header.
 
-What it does:
-  1. Removes exact duplicate rows from backend/cleaned_combine_wsrjc.csv
-     (the CSV is what the price-forecasting API reads).
-  2. Writes an Excel workbook where every row and column is visible:
-       - Market Prices    : full price dataset (+ a real Date column)
-       - Summary          : records / average price per state & commodity
-       - Crop Nutrients   : NPK ranges + fertilizer per crop
-       - Leaf Diseases    : disease classes with description & treatment
-       - Data Dictionary  : meaning of every column
-       - Data Quality     : what was cleaned and what to watch out for
+  Market Prices     all Agmarknet mandi price rows + rainfall for that district & day
+  Summary           records / average price per state & commodity
+  District Weather  location of every district and its rainfall totals
+  Model Accuracy    validation results of the per-commodity price models
+  Crop Nutrients    NPK ranges + fertilizer per crop
+  Leaf Diseases     disease classes with description & treatment
+  Data Dictionary   meaning of every column
+  Data Quality      cleaning notes + rows the model ignores as data errors
 
 Run from the project root:
     python backend/scripts/export_dataset.py
 """
 
 import json
+import sys
 from pathlib import Path
 
 import pandas as pd
 from openpyxl import Workbook
+from openpyxl.cell import WriteOnlyCell
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 ROOT = Path(__file__).resolve().parents[2]
-CSV_PATH = ROOT / "backend" / "cleaned_combine_wsrjc.csv"
+BACKEND = ROOT / "backend"
+sys.path.insert(0, str(BACKEND))
+import price_features as pf  # noqa: E402
+
+CSV_PATH = BACKEND / "cleaned_combine_wsrjc.csv"
+WEATHER_PATH = BACKEND / "district_weather.csv"
+COORDS_PATH = BACKEND / "district_coords.csv"
+METRICS_PATH = BACKEND / "price_model_metrics.json"
 NPK_PATH = ROOT / "src" / "data" / "commodity_npk_fertilizer_data.json"
 DISEASE_PATH = ROOT / "src" / "data" / "plant_disease_classes.json"
 OUT_DIR = ROOT / "dataset"
@@ -34,38 +42,9 @@ OUT_PATH = OUT_DIR / "KrishiSetu_Dataset.xlsx"
 
 HEADER_FONT = Font(bold=True, color="FFFFFF")
 HEADER_FILL = PatternFill("solid", fgColor="1F7A4D")
-PRICE_COL = "Modal Price (Rs./Quintal)"
+PRICE_COL = pf.PRICE_COL
 MSP_COL = "MSP (Rs./Quintal)"
-
-
-def write_sheet(wb, title, df, widths=None, wrap_cols=()):
-    """Write a DataFrame to a sheet with a styled, frozen, filterable header."""
-    ws = wb.create_sheet(title)
-    ws.append(list(df.columns))
-    for row in df.itertuples(index=False):
-        ws.append([None if (isinstance(v, float) and pd.isna(v)) else v for v in row])
-
-    for idx, col in enumerate(df.columns, start=1):
-        cell = ws.cell(row=1, column=idx)
-        cell.font = HEADER_FONT
-        cell.fill = HEADER_FILL
-        cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
-        letter = get_column_letter(idx)
-        if widths and col in widths:
-            width = widths[col]
-        else:
-            sample = df[col].astype(str).head(2000)
-            width = min(max(len(str(col)), int(sample.str.len().max() or 0)) + 3, 60)
-        ws.column_dimensions[letter].width = width
-        ws.column_dimensions[letter].hidden = False
-        if col in wrap_cols:
-            for r in range(2, ws.max_row + 1):
-                ws.cell(row=r, column=idx).alignment = Alignment(wrap_text=True, vertical="top")
-
-    ws.freeze_panes = "A2"
-    ws.auto_filter.ref = f"A1:{get_column_letter(len(df.columns))}{ws.max_row}"
-    ws.row_dimensions[1].height = 32
-    return ws
+MAX_ERROR_ROWS = 20000
 
 
 def remove_duplicate_lines(path):
@@ -73,26 +52,89 @@ def remove_duplicate_lines(path):
     lines = path.read_bytes().split(b"\n")
     seen, kept = set(), []
     for line in lines:
-        if line and line in seen:
+        key = line.rstrip(b"\r")
+        if key and key in seen:
             continue
-        seen.add(line)
+        seen.add(key)
         kept.append(line)
     path.write_bytes(b"\n".join(kept))
     return len(lines) - len(kept)
 
 
+def write_sheet(wb, title, df, widths=None, wrap_cols=(), date_cols=(), filter_rows=True, extra=None):
+    """Write a DataFrame (write-only mode, fast for big sheets)."""
+    ws = wb.create_sheet(title)
+    for idx, col in enumerate(df.columns, start=1):
+        if widths and col in widths:
+            width = widths[col]
+        else:
+            sample = df[col].astype(str).head(2000)
+            width = min(max(len(str(col)), int(sample.str.len().max() or 0)) + 3, 60)
+        ws.column_dimensions[get_column_letter(idx)].width = width
+    ws.freeze_panes = "A2"
+    if filter_rows:
+        ws.auto_filter.ref = f"A1:{get_column_letter(len(df.columns))}{len(df) + 1}"
+
+    header = []
+    for col in df.columns:
+        c = WriteOnlyCell(ws, value=col)
+        c.font, c.fill = HEADER_FONT, HEADER_FILL
+        c.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        header.append(c)
+    ws.append(header)
+
+    wrap = [df.columns.get_loc(c) for c in wrap_cols if c in df]
+    dates = [df.columns.get_loc(c) for c in date_cols if c in df]
+    for row in df.itertuples(index=False):
+        values = [None if (isinstance(v, float) and pd.isna(v)) else v for v in row]
+        if wrap or dates:
+            for i in wrap:
+                c = WriteOnlyCell(ws, value=values[i])
+                c.alignment = Alignment(wrap_text=True, vertical="top")
+                values[i] = c
+            for i in dates:
+                c = WriteOnlyCell(ws, value=values[i])
+                c.number_format = "dd-mmm-yyyy"
+                values[i] = c
+        ws.append(values)
+
+    for block in extra or []:
+        ws.append([])
+        title_cell = WriteOnlyCell(ws, value=block["title"])
+        title_cell.font = Font(bold=True)
+        ws.append([title_cell])
+        head = []
+        for col in block["df"].columns:
+            c = WriteOnlyCell(ws, value=col)
+            c.font, c.fill = HEADER_FONT, HEADER_FILL
+            head.append(c)
+        ws.append(head)
+        for row in block["df"].itertuples(index=False):
+            ws.append(list(row))
+    return ws
+
+
 def main():
     removed_duplicates = remove_duplicate_lines(CSV_PATH)
     df = pd.read_csv(CSV_PATH)
+    df["date"] = pd.to_datetime(df[["year", "month", "day"]])
     original_rows = len(df) + removed_duplicates
 
-    df["Date"] = pd.to_datetime(df[["year", "month", "day"]]).dt.date
-    df = df.sort_values(["State Name", "District Name", "Commodity", "Date", "Market Name"]).reset_index(drop=True)
+    # Rainfall for the district on that day + the week before it
+    weather = pd.read_csv(WEATHER_PATH, parse_dates=["date"]) if WEATHER_PATH.exists() else None
+    if weather is not None:
+        wf = pf.weather_features(weather)[["State Name", "District Name", "date", "rain_1d", "rain_7d", "tmax_1d"]]
+        df = df.merge(wf, on=["State Name", "District Name", "date"], how="left")
+        df = df.rename(columns={"rain_1d": "Rain (mm)", "rain_7d": "Rain last 7 days (mm)", "tmax_1d": "Max Temp (°C)"})
+        for c in ("Rain (mm)", "Rain last 7 days (mm)", "Max Temp (°C)"):
+            df[c] = df[c].round(1)
 
-    # Rows whose price is far away from the typical price of that commodity
-    median = df.groupby("Commodity")[PRICE_COL].transform("median")
-    suspicious = df[(df[PRICE_COL] > median * 4) | (df[PRICE_COL] < median / 4)]
-    msp_zero = int((df[MSP_COL] == 0).sum())
+    cleaned = pf.clean_prices(df)
+    errors = df.loc[~df.index.isin(cleaned.index)]
+
+    df["Date"] = df["date"].dt.date
+    df = df.drop(columns="date").sort_values(
+        ["State Name", "District Name", "Commodity", "Date", "Market Name"]).reset_index(drop=True)
 
     summary = (
         df.groupby(["State Name", "Commodity"])
@@ -104,105 +146,141 @@ def main():
                 "Avg Modal Price": (PRICE_COL, "mean"),
                 "Min Modal Price": (PRICE_COL, "min"),
                 "Max Modal Price": (PRICE_COL, "max"),
+                "First Date": ("Date", "min"),
+                "Last Date": ("Date", "max"),
             },
-            **{"First Date": ("Date", "min"), "Last Date": ("Date", "max")},
         )
         .reset_index()
     )
     summary["Avg Modal Price"] = summary["Avg Modal Price"].round(2)
 
-    npk = pd.DataFrame(
-        [
-            {
-                "Crop": crop,
-                "Nitrogen N (kg/ha)": info["N_range_kg_per_ha"],
-                "Phosphorus P (kg/ha)": info["P_range_kg_per_ha"],
-                "Potassium K (kg/ha)": info["K_range_kg_per_ha"],
-                "Preferred Fertilizer": info["preferred_fertilizer"],
-            }
-            for crop, info in json.loads(NPK_PATH.read_text(encoding="utf-8")).items()
-        ]
-    )
+    district_weather = None
+    if weather is not None and COORDS_PATH.exists():
+        coords = pd.read_csv(COORDS_PATH)
+        w = weather.assign(year=weather["date"].dt.year)
+        yearly = w.pivot_table(index=["State Name", "District Name"], columns="year",
+                               values="rain_mm", aggfunc="sum").round(0)
+        yearly.columns = [f"Rain {y} (mm)" for y in yearly.columns]
+        last30 = (w[w["date"] > w["date"].max() - pd.Timedelta(days=30)]
+                  .groupby(["State Name", "District Name"])["rain_mm"].sum().round(1)
+                  .rename("Rain last 30 days (mm)"))
+        district_weather = (coords.rename(columns={"latitude": "Latitude", "longitude": "Longitude",
+                                                   "source": "Located by"})
+                            .merge(yearly.reset_index(), on=["State Name", "District Name"], how="left")
+                            .merge(last30.reset_index(), on=["State Name", "District Name"], how="left")
+                            .sort_values(["State Name", "District Name"]))
 
-    diseases = pd.DataFrame(
-        [
+    accuracy = None
+    if METRICS_PATH.exists():
+        m = json.loads(METRICS_PATH.read_text(encoding="utf-8"))
+        accuracy = pd.DataFrame([
             {
-                "Class": d["disease_name"].strip(),
-                "Plant": d["disease_name"].strip().split("_")[0],
-                "Description": d.get("description", ""),
-                "Treatment": d.get("treatement", ""),
-                "Fertilizer / Fungicide": d.get("fertilizerName", ""),
-                "Watering": (d.get("waterLevel") or d.get("waterLevel ") or ""),
+                "Commodity": c,
+                "Districts": v.get("districts"),
+                "Days of prices": v.get("days_of_prices"),
+                "Validation days": v.get("validation_days"),
+                "Model error MAE (Rs.)": v.get("mae"),
+                "Model error MAPE (%)": v.get("mape_percent"),
+                "R²": v.get("r2"),
+                "Baseline 'same as last price' MAE (Rs.)": v.get("baseline_mae"),
+                "Uses rain": "Yes" if v.get("uses_rain") else "No",
+                "MAE without rain (Rs.)": v.get("mae_without_rain"),
+                "MAE with rain (Rs.)": v.get("mae_with_rain"),
+                "Heavy-rain days tested": v.get("heavy_rain_days"),
+                "Heavy-rain-day MAE without rain (Rs.)": v.get("heavy_rain_mae_without_rain"),
+                "Heavy-rain-day MAE with rain (Rs.)": v.get("heavy_rain_mae_with_rain"),
             }
-            for d in json.loads(DISEASE_PATH.read_text(encoding="utf-8"))
-        ]
-    )
+            for c, v in m.get("commodities", {}).items()
+        ])
+
+    npk = pd.DataFrame([
+        {
+            "Crop": crop,
+            "Nitrogen N (kg/ha)": info["N_range_kg_per_ha"],
+            "Phosphorus P (kg/ha)": info["P_range_kg_per_ha"],
+            "Potassium K (kg/ha)": info["K_range_kg_per_ha"],
+            "Preferred Fertilizer": info["preferred_fertilizer"],
+        }
+        for crop, info in json.loads(NPK_PATH.read_text(encoding="utf-8")).items()
+    ])
+
+    diseases = pd.DataFrame([
+        {
+            "Class": d["disease_name"].strip(),
+            "Plant": d["disease_name"].strip().split("_")[0],
+            "Description": d.get("description", ""),
+            "Treatment": d.get("treatement", ""),
+            "Fertilizer / Fungicide": d.get("fertilizerName", ""),
+            "Watering": d.get("waterLevel") or "",
+        }
+        for d in json.loads(DISEASE_PATH.read_text(encoding="utf-8"))
+    ])
 
     dictionary = pd.DataFrame(
         [
             ("Market Prices", "State Name", "Indian state where the mandi (market) is located"),
-            ("Market Prices", "District Name", "District of the mandi"),
+            ("Market Prices", "District Name", "District of the mandi (Agmarknet renames mapped to the old names)"),
             ("Market Prices", "Market Name", "Name of the APMC mandi"),
             ("Market Prices", "Commodity", "Crop traded: Cotton, Wheat, Rice, Jowar, Sugarcane"),
-            ("Market Prices", MSP_COL, "Reference / minimum price recorded for the day (Rs. per quintal)"),
+            ("Market Prices", MSP_COL, "Minimum price of the day in that mandi (Agmarknet 'Min Price', Rs. per quintal)"),
             ("Market Prices", PRICE_COL, "Most common trading price of the day (Rs. per quintal) - the value the model forecasts"),
-            ("Market Prices", "day / month / year", "Date of the price record, split into parts (used by the model)"),
-            ("Market Prices", "Date", "Same date as one Excel date column, for easy sorting / filtering"),
-            ("Model features", "lag_1", "Last known modal price before the prediction date"),
-            ("Model features", "lag_7", "Modal price 7 records before the prediction date"),
-            ("Model features", "rolling_7", "Average of the last 7 modal prices"),
-            ("Model features", "day_of_week / month / quarter", "Calendar features of the prediction date"),
+            ("Market Prices", "day / month / year", "Date of the price record, split into parts"),
+            ("Market Prices", "Rain (mm)", "Rainfall in the district on that day (NASA POWER / Open-Meteo)"),
+            ("Market Prices", "Rain last 7 days (mm)", "Total rainfall in the district over that day and the 6 days before"),
+            ("Market Prices", "Max Temp (°C)", "Maximum temperature in the district on that day"),
+            ("Market Prices", "Date", "Same date as one Excel date column"),
+            ("Model features", "lag_1 / lag_2 / lag_3 / lag_7", "District price 1, 2, 3 and 7 trading days before"),
+            ("Model features", "rolling_7 / rolling_30 / std_7", "Average of the last 7 / 30 days and how much the last 7 varied"),
+            ("Model features", "gap_days", "Days since the last recorded price"),
+            ("Model features", "rain_1d / rain_3d / rain_7d / rain_30d", "Rain on the day and summed over 3, 7, 30 days"),
+            ("Model features", "tmax_1d", "Maximum temperature on the day"),
+            ("Model features", "day_of_week / month / day_of_year", "Calendar (season) of the prediction date"),
             ("Model features", "State_enc / District_enc", "Label-encoded state and district"),
+            ("Model", "Target", "Change from the last price, log(price / lag_1); one XGBoost model per commodity"),
         ],
         columns=["Sheet / Group", "Column", "Meaning"],
     )
 
+    dates = pd.to_datetime(df["Date"])
     quality = pd.DataFrame(
         [
             ("Rows in source CSV", original_rows),
             ("Exact duplicate rows removed", removed_duplicates),
             ("Rows kept", len(df)),
-            ("Date range", f"{df['Date'].min()} to {df['Date'].max()}"),
+            ("Date range", f"{dates.min().date()} to {dates.max().date()}"),
             ("States", df["State Name"].nunique()),
             ("Districts", df["District Name"].nunique()),
             ("Markets", df["Market Name"].nunique()),
-            ("Rows with MSP = 0 (kept, MSP is not used by the model)", msp_zero),
-            ("Rows with price > 4x or < 1/4 of commodity median (kept, listed below)", len(suspicious)),
-            ("Missing values", int(df.isna().sum().sum())),
+            ("Rows with MSP = 0 (kept, not used by the model)", int((df[MSP_COL] == 0).sum())),
+            ("Rows ignored by the model as data errors (listed below)", len(errors)),
+            ("Rows with rainfall attached", int(df["Rain (mm)"].notna().sum()) if "Rain (mm)" in df else 0),
         ],
         columns=["Check", "Value"],
     )
+    error_rows = errors[["State Name", "District Name", "Market Name", "Commodity", PRICE_COL]].assign(
+        Date=errors["date"].dt.date).head(MAX_ERROR_ROWS)
 
     OUT_DIR.mkdir(exist_ok=True)
-    wb = Workbook()
-    wb.remove(wb.active)
+    wb = Workbook(write_only=True)
 
-    write_sheet(wb, "Market Prices", df, widths={"Date": 13, "day": 7, "month": 8, "year": 8})
-    for row in wb["Market Prices"].iter_rows(min_row=2, min_col=10, max_col=10):
-        row[0].number_format = "dd-mmm-yyyy"
+    print(f"Writing {len(df)} price rows...", flush=True)
+    write_sheet(wb, "Market Prices", df, widths={"Date": 13, "day": 7, "month": 8, "year": 8}, date_cols=("Date",))
     write_sheet(wb, "Summary", summary)
+    if district_weather is not None:
+        write_sheet(wb, "District Weather", district_weather)
+    if accuracy is not None:
+        write_sheet(wb, "Model Accuracy", accuracy, widths={c: 18 for c in accuracy.columns})
     write_sheet(wb, "Crop Nutrients", npk)
     write_sheet(
         wb, "Leaf Diseases", diseases,
         widths={"Class": 34, "Plant": 16, "Description": 60, "Treatment": 60, "Fertilizer / Fungicide": 32, "Watering": 50},
         wrap_cols=("Description", "Treatment", "Watering"),
     )
-    write_sheet(wb, "Data Dictionary", dictionary, widths={"Sheet / Group": 18, "Column": 30, "Meaning": 90})
-    qws = write_sheet(wb, "Data Quality", quality, widths={"Check": 70, "Value": 28})
-    qws.auto_filter.ref = None
-
-    start = qws.max_row + 3
-    qws.cell(row=start - 1, column=1, value="Suspicious price rows (check before trusting)").font = Font(bold=True)
-    cols = ["State Name", "District Name", "Market Name", "Commodity", PRICE_COL, "Date"]
-    for c, name in enumerate(cols, start=1):
-        cell = qws.cell(row=start, column=c, value=name)
-        cell.font = HEADER_FONT
-        cell.fill = HEADER_FILL
-    for r, row in enumerate(suspicious[cols].itertuples(index=False), start=start + 1):
-        for c, v in enumerate(row, start=1):
-            qws.cell(row=r, column=c, value=v)
-    for c in range(3, 7):
-        qws.column_dimensions[get_column_letter(c)].width = 22
+    write_sheet(wb, "Data Dictionary", dictionary, widths={"Sheet / Group": 18, "Column": 36, "Meaning": 90})
+    write_sheet(
+        wb, "Data Quality", quality, widths={"Check": 60, "Value": 28}, filter_rows=False,
+        extra=[{"title": f"Rows the model ignores as data errors (first {MAX_ERROR_ROWS})", "df": error_rows}],
+    )
 
     wb.save(OUT_PATH)
     print(f"Removed {removed_duplicates} duplicate rows, kept {len(df)}")

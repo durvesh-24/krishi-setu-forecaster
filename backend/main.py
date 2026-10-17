@@ -1,3 +1,7 @@
+import json
+import os
+import threading
+import time
 from datetime import date
 from typing import Optional
 
@@ -9,6 +13,7 @@ from pydantic import BaseModel, Field
 from crop_recommend import predict_crop, top_crops
 from leaf_detect import analyze_leaf_species
 from leaf_disease_detect import predict_disease
+import price_forecasting
 from price_forecasting import get_price_options, predict_commodity_price
 from weather import weather_forecast
 
@@ -55,6 +60,47 @@ class WeatherInput(BaseModel):
     city: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+
+
+# Daily price data refresh from Agmarknet (needs DATA_GOV_API_KEY in .env)
+UPDATE_INTERVAL_HOURS = float(os.getenv("PRICE_UPDATE_INTERVAL_HOURS", "24"))
+update_status = {"running": False, "last_run": None, "last_result": None, "last_error": None}
+_update_lock = threading.Lock()
+
+
+def run_price_update():
+    if not _update_lock.acquire(blocking=False):
+        return
+    update_status.update(running=True, last_error=None)
+    try:
+        from update_prices import update
+
+        result = update(log=lambda msg: print(f"[price-update] {msg}", flush=True))
+        if "training" in result:
+            price_forecasting.load()
+        update_status["last_result"] = result.get("sync")
+    except Exception as e:
+        update_status["last_error"] = str(e)
+        print(f"[price-update] failed: {e}", flush=True)
+    finally:
+        update_status.update(running=False, last_run=time.strftime("%Y-%m-%d %H:%M:%S"))
+        _update_lock.release()
+
+
+def _price_update_loop():
+    time.sleep(30)  # let the server finish starting
+    while True:
+        run_price_update()
+        # after a failure (e.g. data.gov.in down) try again in an hour
+        time.sleep(3600 if update_status["last_error"] else UPDATE_INTERVAL_HOURS * 3600)
+
+
+@app.on_event("startup")
+def start_price_updates():
+    if os.getenv("DATA_GOV_API_KEY") and os.getenv("AUTO_UPDATE_PRICES", "1") != "0":
+        threading.Thread(target=_price_update_loop, daemon=True, name="price-update").start()
+    else:
+        print("[price-update] DATA_GOV_API_KEY not set - automatic Agmarknet updates are off", flush=True)
 
 
 # Root endpoint
@@ -119,6 +165,25 @@ def price_options():
     States, districts and commodities that have enough data to forecast.
     """
     return get_price_options()
+
+
+@app.get("/price-status")
+def price_status():
+    """
+    How fresh the price data and models are, plus the last automatic update.
+    """
+    metrics = {}
+    path = os.path.join(price_forecasting.BASE_DIR, "price_model_metrics.json")
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as f:
+            metrics = json.load(f)
+    return {
+        "data_end": price_forecasting.df["date"].max().date().isoformat(),
+        "rows": int(len(price_forecasting.df)),
+        "model": metrics,
+        "auto_update": bool(os.getenv("DATA_GOV_API_KEY")),
+        "update": update_status,
+    }
 
 
 @app.post("/predict-price")
