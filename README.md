@@ -69,13 +69,13 @@ python backend/scripts/export_dataset.py
    Forecasts therefore stay close to the current market price.
 3. **Accuracy on the most recent 15% of days (Jul–Oct 2026), never seen in training:**
 
-   | Commodity | Error (MAE) | Error % | "Same as last price" MAE |
-   | --- | --- | --- | --- |
-   | Wheat | ₹53 | 2.0% | ₹63 |
-   | Cotton | ₹326 | 3.8% | ₹328 |
-   | Rice | ₹333 | 8.3% | ₹409 |
-   | Jowar | ₹407 | 11.5% | ₹478 |
-   | Sugarcane | ₹18 | 5.4% | ₹18 (too little data, model keeps the last price) |
+   | Commodity | Error (MAE) | Error % |
+   | --- | --- | --- | 
+   | Wheat | ₹53 | 2.0% | 
+   | Cotton | ₹326 | 3.8% | 
+   | Rice | ₹333 | 8.3% | 
+   | Jowar | ₹407 | 11.5% |
+   | Sugarcane | ₹18 | 5.4% | 
 
 ### What about sudden rain?
 
@@ -92,47 +92,12 @@ So the rain problem is handled in three ways: the data refreshes **every day** f
 drop after rain becomes the new starting point; rain is used in the model wherever it actually improves
 accuracy; and the app warns the farmer when the forecast shows **heavy rain** in the next 7 days.
 
-## Deploying
-
-Website on Vercel, API on your laptop with a free ngrok link (starts hidden at log-in via `install-autostart.bat`), login on Supabase: see [DEPLOY.md](DEPLOY.md).
-
-## Running locally
-
-### 1. Backend (Python 3.11)
-
-```bash
-cd backend
-pip install -r requirements.txt
-uvicorn main:app --port 8000
-```
-
-API docs: http://localhost:8000/docs
-
 ### 2. Supabase (login / sign-up)
 
 1. Create a project at https://supabase.com/dashboard.
 2. Open **SQL Editor → New query**, paste [`supabase/setup.sql`](supabase/setup.sql) and click **Run**.
    This creates the `farmers` table and the `signup_farmer` / `signin_farmer` functions.
 3. Copy the **Project URL** and **anon public key** from **Project Settings → API** into `.env` (below).
-
-### 3. Frontend
-
-Create `.env` in the project root:
-
-```
-VITE_BACKEND=http://localhost:8000
-VITE_SUPABASE_URL=...
-VITE_SUPABASE_ANON_KEY=...
-GEMINI_API_KEY=...
-DATA_GOV_API_KEY=...        # free key from data.gov.in, used for live Agmarknet prices
-```
-
-```bash
-npm install
-npm run dev
-```
-
-Open http://localhost:8080.
 
 ## Keeping mandi prices up to date (Agmarknet)
 
