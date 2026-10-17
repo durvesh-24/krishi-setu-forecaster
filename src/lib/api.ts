@@ -2,7 +2,13 @@ import axios from "axios";
 
 export const BACKEND_URL = (import.meta.env.VITE_BACKEND || "http://localhost:8000").replace(/\/$/, "");
 
-export const api = axios.create({ baseURL: BACKEND_URL, timeout: 60000 });
+export const api = axios.create({
+  baseURL: BACKEND_URL,
+  timeout: 60000,
+  // The backend can be reached through an ngrok free link, which otherwise
+  // answers browser requests with a warning page instead of the API response
+  headers: { "ngrok-skip-browser-warning": "true" },
+});
 
 /** Pull the most useful message out of an axios/fetch error. */
 export const apiErrorMessage = (err: unknown, fallback: string) => {

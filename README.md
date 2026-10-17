@@ -94,7 +94,7 @@ accuracy; and the app warns the farmer when the forecast shows **heavy rain** in
 
 ## Deploying
 
-Website on Vercel, API on Hugging Face Spaces, login on Supabase: see [DEPLOY.md](DEPLOY.md).
+Website on Vercel, API on your laptop with a free ngrok link (`start-backend.bat`), login on Supabase: see [DEPLOY.md](DEPLOY.md).
 
 ## Running locally
 

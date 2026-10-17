@@ -1,14 +1,16 @@
 # Deploying KrishiSetu
 
-KrishiSetu has two parts that are hosted separately:
-
-| Part | Where | Why |
+| Part | Where | Notes |
 | --- | --- | --- |
-| Website (React) | **Vercel** | Free static hosting, deploys from GitHub |
-| API (Python: PyTorch, XGBoost, ~200 MB of models/data) | **Hugging Face Spaces** (Docker) | Free, 16 GB RAM. Too large for Vercel's serverless functions |
-| Login database | **Supabase** | Already used by the app |
+| Website (React) | **Vercel** | Always online, free |
+| API (Python: PyTorch, XGBoost, ~200 MB of models/data) | **Your laptop + ngrok** | Free, fixed public link; works while the laptop runs `start-backend.bat` |
+| Login database | **Supabase** | Free |
 
-Do them in this order: **1 → 2 → 3**, because the website needs the API address and Supabase keys.
+Free cloud servers (Render, Koyeb, Hugging Face free CPU) either have too little memory (512 MB) for
+this API or are not available on every account. If you later get a paid plan (e.g. Hugging Face PRO),
+`backend/Dockerfile` is ready to use there instead — just point `VITE_BACKEND` at that address.
+
+Do the steps in order: **1 → 2 → 3 → 4**.
 
 ---
 
@@ -16,50 +18,61 @@ Do them in this order: **1 → 2 → 3**, because the website needs the API addr
 
 1. https://supabase.com/dashboard → **New project**.
 2. **SQL Editor → New query** → paste all of [`supabase/setup.sql`](supabase/setup.sql) → **Run**.
-3. **Project Settings → API**: copy the **Project URL** and the **anon public** key (you need them in step 3).
+3. **Project Settings → API**: copy the **Project URL** and the **anon public** key.
+4. Put them in `.env` as `VITE_SUPABASE_URL=...` and `VITE_SUPABASE_ANON_KEY=...`.
 
-## 2. API on Hugging Face Spaces
+## 2. ngrok: a free fixed public link for the API
 
-1. Sign up at https://huggingface.co (free).
-2. Top right → **New → Space**
-   - Space name: `krishisetu-api`
-   - SDK: **Docker** → **Blank**
-   - Hardware: **CPU basic (free)**
-   - Visibility: Public
-3. In the new Space open **Files → Add file → Upload files** and drag in **everything inside the
-   `backend/` folder** (not the folder itself): `main.py`, `Dockerfile`, `README.md`,
-   `requirements.txt`, all `.py` files, the `.csv`, `.joblib`, `.json` and `.pth` files, and the `scripts` folder.
-   Large files are handled automatically. Click **Commit**.
-4. **Settings → Variables and secrets → New secret**, add:
-   - `GEMINI_API_KEY` = your Gemini key
-   - `DATA_GOV_API_KEY` = your data.gov.in key
-5. The Space builds (about 5–10 minutes the first time). When it says **Running**, your API address is
-   `https://<your-username>-krishisetu-api.hf.space`. Check `https://<your-username>-krishisetu-api.hf.space/docs` opens.
+1. Sign up at https://dashboard.ngrok.com/signup (free).
+2. **Your Authtoken** (left menu) → copy the token.
+3. **Domains** (left menu, under *Universal Gateway*) → your free static domain, something like
+   `your-name.ngrok-free.app` (click **+ New Domain / Create Domain** if none is shown) → copy it.
+4. Install ngrok — in PowerShell:
+   ```
+   winget install ngrok.ngrok
+   ```
+   Close and reopen PowerShell, then save your token (once):
+   ```
+   ngrok config add-authtoken PASTE_YOUR_TOKEN
+   ```
+5. Add the domain to `.env` (no `https://`):
+   ```
+   NGROK_DOMAIN=your-name.ngrok-free.app
+   ```
+6. Make sure the backend packages are installed (once):
+   ```
+   py -3.11 -m pip install -r backend\requirements.txt
+   ```
 
-> Free Spaces go to sleep after ~48 hours without visitors and wake up on the next request (takes a minute).
-> Open the API link a few minutes before a demo.
+## 3. Start the API
 
-## 3. Website on Vercel
+Double-click **`start-backend.bat`** in the project folder.
 
-1. Sign up at https://vercel.com with your GitHub account.
-2. **Add New → Project** → import `durvesh-24/krishi-setu-forecaster`.
-3. Framework preset: **Vite** (detected automatically; `vercel.json` sets the rest).
-4. **Environment Variables** — add these three:
+- It starts the API (≈30 s) and then ngrok. Keep the window open.
+- Check it: open `https://your-name.ngrok-free.app/docs` in a browser (click **Visit Site** if ngrok shows a notice).
+- While it runs, the API also downloads new Agmarknet prices and rainfall once a day and retrains itself.
+
+## 4. Website on Vercel
+
+1. Sign up at https://vercel.com → **Continue with GitHub**.
+2. **Add New… → Project** → import `durvesh-24/krishi-setu-forecaster`.
+3. Framework preset: **Vite** (automatic). Leave the build settings as they are.
+4. **Environment Variables**:
 
    | Name | Value |
    | --- | --- |
-   | `VITE_BACKEND` | `https://<your-username>-krishisetu-api.hf.space` (no `/` at the end) |
-   | `VITE_SUPABASE_URL` | Project URL from step 1 |
-   | `VITE_SUPABASE_ANON_KEY` | anon public key from step 1 |
+   | `VITE_BACKEND` | `https://your-name.ngrok-free.app` (no `/` at the end) |
+   | `VITE_SUPABASE_URL` | Supabase Project URL |
+   | `VITE_SUPABASE_ANON_KEY` | Supabase anon public key |
 
-5. **Deploy**. You get a link like `https://krishi-setu-forecaster.vercel.app`.
+5. **Deploy** → you get `https://krishi-setu-forecaster.vercel.app` (or similar).
 
-If you change an environment variable later, use **Deployments → ⋯ → Redeploy** so the new value is built in.
+If you change a variable later: **Deployments → ⋯ → Redeploy**.
 
-## Check it works
+## Before a demo
 
-- Open the Vercel link → sign up → Dashboard shows the weather.
-- Price Forecasting → pick a state, district, commodity → a price and the rain section appear.
-- Leaf Disease → upload a leaf photo → a result appears.
+1. Double-click `start-backend.bat` and wait for the ngrok screen ("Session Status: online").
+2. Open the Vercel link → log in → Dashboard should show the weather.
 
-If a page says it can't reach the server, open the Hugging Face Space link first to wake it up, then refresh.
+If a page says it can't reach the server, the `start-backend.bat` window is closed or the laptop is
+offline — start it again.
