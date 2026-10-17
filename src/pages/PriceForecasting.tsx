@@ -229,10 +229,6 @@ const PriceForecasting = () => {
                 </div>
               </div>
 
-              <p className="text-xs text-muted-foreground">
-                {t("price.dataRange", { start: fmtDate(options.data_start), end: fmtDate(options.data_end) })}
-              </p>
-
               <Button type="submit" className="h-12 w-full text-base font-semibold" size="lg" disabled={isLoading}>
                 {isLoading ? (
                   <>
