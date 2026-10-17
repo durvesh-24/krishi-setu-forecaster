@@ -2,55 +2,25 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#1f7a4d" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0c1411" media="(prefers-color-scheme: dark)" />
 
   <title>KrishiSetu - Your Smart Farming Companion</title>
 
-  <meta name="description" content="Empowering farmers with smart agricultural insights" />
+  <meta name="description" content="Crop recommendation, leaf disease detection, weather and mandi price forecasts for farmers" />
   <meta name="author" content="KrishiSetu" />
 
-  <style>
-    iframe {
-      display: none !important;
-    }
-    body {
-      top: 0 !important;
-    }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
 </head>
 
 <body>
-  <!-- Hidden Google Translate Element -->
-  <div id="google_translate_element" style="display:none;"></div>
-
-  <!-- React Mount -->
   <div id="root"></div>
-
-  <script>
-    function googleTranslateElementInit() {
-      new google.translate.TranslateElement(
-        {
-          pageLanguage: 'en',
-          includedLanguages: 'en,mr,hi',
-          autoDisplay: false
-        },
-        'google_translate_element'
-      );
-    }
-
-    // Expose globally for React
-    window.setAppLanguage = function (lang) {
-      const select = document.querySelector('.goog-te-combo');
-      if (!select) {
-        alert("Language system loading… please try again.");
-        return;
-      }
-      select.value = lang;
-      select.dispatchEvent(new Event('change'));
-    };
-  </script>
-
-  <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
   <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>

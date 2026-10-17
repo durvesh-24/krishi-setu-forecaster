@@ -2,93 +2,99 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Design system. All colors are HSL channels, used as hsl(var(--token)).
+   Light theme on :root, dark theme on .dark (toggled by next-themes). */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 220 10% 15%;
+    --background: 80 20% 97%;
+    --foreground: 150 25% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 10% 15%;
+    --card-foreground: 150 25% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 10% 15%;
+    --popover-foreground: 150 25% 10%;
 
-    --primary: 142 76% 36%;
+    --primary: 152 62% 30%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 142 35% 85%;
-    --secondary-foreground: 142 76% 20%;
+    --secondary: 140 30% 93%;
+    --secondary-foreground: 152 55% 20%;
 
-    --muted: 142 20% 96%;
-    --muted-foreground: 220 10% 50%;
+    --muted: 90 16% 93%;
+    --muted-foreground: 150 8% 38%;
 
-    --accent: 142 76% 36%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 140 28% 92%;
+    --accent-foreground: 152 55% 18%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 72% 48%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 142 20% 90%;
-    --input: 142 20% 90%;
-    --ring: 142 76% 36%;
+    --border: 90 12% 87%;
+    --input: 90 12% 84%;
+    --ring: 152 62% 30%;
 
-    --radius: 1rem;
-    
-    --gradient-primary: linear-gradient(180deg, hsl(142 76% 50%) 0%, hsl(58 76% 50%) 100%);
-    --gradient-card: linear-gradient(135deg, hsl(142 50% 96%) 0%, hsl(0 0% 100%) 100%);
+    --radius: 0.9rem;
+
+    /* Feature tones (icons, chips, charts) */
+    --tone-green: 152 62% 30%;
+    --tone-sky: 205 85% 40%;
+    --tone-rose: 350 70% 46%;
+    --tone-amber: 30 92% 40%;
+    --tone-violet: 262 55% 50%;
+
+    --hero-from: 152 62% 26%;
+    --hero-to: 95 50% 36%;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
-    --background: 142 30% 8%;
-    --foreground: 0 0% 95%;
+    --background: 155 22% 6%;
+    --foreground: 90 12% 93%;
 
-    --card: 142 30% 12%;
-    --card-foreground: 0 0% 95%;
+    --card: 155 18% 9.5%;
+    --card-foreground: 90 12% 93%;
 
-    --popover: 142 30% 12%;
-    --popover-foreground: 0 0% 95%;
+    --popover: 155 18% 10%;
+    --popover-foreground: 90 12% 93%;
 
-    --primary: 142 76% 50%;
-    --primary-foreground: 142 30% 8%;
+    --primary: 148 55% 48%;
+    --primary-foreground: 155 35% 7%;
 
-    --secondary: 142 30% 20%;
-    --secondary-foreground: 0 0% 95%;
+    --secondary: 155 15% 15%;
+    --secondary-foreground: 90 12% 92%;
 
-    --muted: 142 30% 20%;
-    --muted-foreground: 0 0% 70%;
+    --muted: 155 14% 13%;
+    --muted-foreground: 100 6% 64%;
 
-    --accent: 142 76% 50%;
-    --accent-foreground: 142 30% 8%;
+    --accent: 155 15% 17%;
+    --accent-foreground: 90 12% 94%;
 
-    --destructive: 0 62.8% 50%;
-    --destructive-foreground: 0 0% 95%;
+    --destructive: 0 65% 56%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 142 30% 20%;
-    --input: 142 30% 20%;
-    --ring: 142 76% 50%;
-    
-    --gradient-primary: linear-gradient(180deg, hsl(142 76% 40%) 0%, hsl(58 76% 40%) 100%);
-    --gradient-card: linear-gradient(135deg, hsl(142 30% 15%) 0%, hsl(142 30% 12%) 100%);
+    --border: 155 12% 17%;
+    --input: 155 12% 21%;
+    --ring: 148 55% 48%;
+
+    --tone-green: 148 55% 55%;
+    --tone-sky: 200 85% 62%;
+    --tone-rose: 350 80% 68%;
+    --tone-amber: 38 92% 60%;
+    --tone-violet: 262 70% 74%;
+
+    --hero-from: 152 50% 16%;
+    --hero-to: 100 35% 20%;
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -105,7 +111,41 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Hide number input spinners, they are hard to use on phones */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+
+  /* Native date picker icon follows the theme */
+  .dark input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
+}
+
+@layer components {
+  .hero-gradient {
+    background-image: linear-gradient(135deg, hsl(var(--hero-from)) 0%, hsl(var(--hero-to)) 100%);
+  }
+
+  .card-elevated {
+    @apply rounded-2xl border bg-card text-card-foreground shadow-sm;
+  }
+
+  .icon-chip {
+    @apply flex shrink-0 items-center justify-center rounded-xl;
   }
 }
