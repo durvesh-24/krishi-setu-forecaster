@@ -3,7 +3,7 @@
 | Part | Where | Notes |
 | --- | --- | --- |
 | Website (React) | **Vercel** | Always online, free |
-| API (Python: PyTorch, XGBoost, ~200 MB of models/data) | **Your laptop + ngrok** | Free, fixed public link; works while the laptop runs `start-backend.bat` |
+| API (Python: PyTorch, XGBoost, ~200 MB of models/data) | **Your laptop + ngrok** | Free, fixed public link; starts hidden at Windows log-in (`install-autostart.bat`) |
 | Login database | **Supabase** | Free |
 
 Free cloud servers (Render, Koyeb, Hugging Face free CPU) either have too little memory (512 MB) for
@@ -44,13 +44,19 @@ Do the steps in order: **1 → 2 → 3 → 4**.
    py -3.11 -m pip install -r backend\requirements.txt
    ```
 
-## 3. Start the API
+## 3. Start the API (automatic)
 
-Double-click **`start-backend.bat`** in the project folder.
+Double-click **`install-autostart.bat`** once.
 
-- It starts the API (≈30 s) and then ngrok. Keep the window open.
-- Check it: open `https://your-name.ngrok-free.app/docs` in a browser (click **Visit Site** if ngrok shows a notice).
-- While it runs, the API also downloads new Agmarknet prices and rainfall once a day and retrains itself.
+- The API and the ngrok link now start **hidden, every time you log in to Windows**, and restart
+  themselves if they crash or the internet drops. No window to keep open.
+- Check it: open `https://your-name.ngrok-free.app/docs` (click **Visit Site** if ngrok shows a notice).
+- Logs are in `backend\logs\` (`service.log` says when it started / restarted).
+- To stop it and remove it from start-up: double-click **`remove-autostart.bat`**.
+- Without autostart you can still start it by hand with **`start-backend.bat`** (keep that window open).
+
+The laptop must be **on, logged in and online** for predictions to work. To stop it sleeping:
+Settings → System → Power → Screen and sleep → *When plugged in, put my device to sleep after* → **Never**.
 
 ## 4. Website on Vercel
 
@@ -71,8 +77,8 @@ If you change a variable later: **Deployments → ⋯ → Redeploy**.
 
 ## Before a demo
 
-1. Double-click `start-backend.bat` and wait for the ngrok screen ("Session Status: online").
+1. Laptop on, logged in, connected to the internet (the backend starts by itself within a minute).
 2. Open the Vercel link → log in → Dashboard should show the weather.
 
-If a page says it can't reach the server, the `start-backend.bat` window is closed or the laptop is
-offline — start it again.
+If a page says it can't reach the server, the laptop is off, asleep or offline. Wake it / reconnect
+and wait a minute; the backend repairs itself.

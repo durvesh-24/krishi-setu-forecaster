@@ -51,6 +51,16 @@ if (-not $domain) {
 }
 $domain = $domain -replace "^https?://", "" -replace "/$", ""
 
+# Already running in the background (install-autostart.bat)? Then there is nothing to do.
+try {
+    $tunnels = Invoke-RestMethod "http://127.0.0.1:4040/api/tunnels" -TimeoutSec 3
+    if ($tunnels.tunnels | Where-Object { $_.public_url -like "*$domain*" }) {
+        Write-Host "  The backend is already running in the background:" -ForegroundColor Green
+        Write-Host "  https://$domain"
+        Read-Host "  Press Enter to close"; exit 0
+    }
+} catch {}
+
 # 2. Start the API (its own window, so you can see the log)
 $apiRunning = $false
 try { Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:$port/" -TimeoutSec 2 | Out-Null; $apiRunning = $true } catch {}
